@@ -24,18 +24,18 @@ def convertRadian(direction) -> float:
     """
 
     indexDirection = [
-        "北","北北東","北東","東北東",
         "東","東南東","南東","南南東",
         "南","南南西","南西","西南西",
-        "西","西北西","北西","北北西"
+        "西","西北西","北西","北北西",
+        "北","北北東","北東","東北東",
     ].index(direction)
-    radian = (indexDirection + 12) / 16 * 2 * math.pi
+    radian = (16 - indexDirection) / 16 * 2 * math.pi
 
     return radian
 
 
-writeFilePath:str = "data/kobe2019/traindata1.csv"
-readFilePath:str = "data/kobe2019/amedas.csv"
+writeFilePath:str = "data/data1/traindata1.csv"
+readFilePath:str = "data/data1/amedas2019.csv"
 
 with open(writeFilePath, encoding="utf-8", mode="w") as wf:
     wf.write("date,longitudeVelocity,latitudeVelocity,temperature,airPressure\n")
@@ -57,7 +57,7 @@ with open(writeFilePath, encoding="utf-8", mode="w") as wf:
             airPressure:float = float(line[9])
             radian:float = convertRadian(direction)
 
-            longitudeVelocity:float =velocity * math.sin(radian) 
-            latitudeVelocity:float = velocity * math.cos(radian)
+            longitudeVelocity:float = round(velocity * math.sin(radian), 12)
+            latitudeVelocity:float = round(velocity * math.cos(radian), 12)
 
             wf.write(f"{timeSeries},{longitudeVelocity},{latitudeVelocity},{temperature},{airPressure}\n")
