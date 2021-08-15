@@ -67,53 +67,55 @@ def skipLines(file:io.TextIOWrapper,times):
     for i in range(times):
         file.readline()
 
-datasetDir:str = "data/dataset2019_1/"
-writeDir:str = datasetDir+"/data/"
-amedasFileName:str = datasetDir+"amedas2019.csv"
-nowphasFileName:str = datasetDir+"h306e019.txt"
+writeFilePath:str = "dataset/2019_01.csv"
+amedasFilePath:str = "src/utils/data/amedas2019.csv"
+nowphasFilePath:str = "src/utils/data/h306e019.txt"
 
-with open(amedasFileName, encoding="shift_jis", mode="r") as amedasFile:
-    with open(nowphasFileName, encoding="shift_jis", mode="r") as nowphasFile:
-        skipLines(amedasFile,6)
-        skipLines(nowphasFile,1)
-        while True:
-            amedasLine:list = amedasFile.readline().split(",")
-            amedasTimeSeries:datetime.datetime = datetime.datetime.strptime(
-                amedasLine[0], "%Y/%m/%d %H:%M"
-            )
+with open(writeFilePath, encoding="utf-8", mode="w") as wf:
+    with open(amedasFilePath, encoding="shift_jis", mode="r") as amedasFile:
+        with open(nowphasFilePath, encoding="shift_jis", mode="r") as nowphasFile:
+            skipLines(amedasFile,6)
+            skipLines(nowphasFile,1)
             while True:
-                nowphasLine:list = interpretNowphasLine(nowphasFile.readline())
-                nowphasTimeSeries:datetime.datetime = datetime.datetime(
-                    year=int(nowphasLine[0][:4]), month=int(nowphasLine[0][4:6]), 
-                    day=int(nowphasLine[0][6:8]), hour=int(nowphasLine[0][8:10]), 
-                    minute=int(nowphasLine[0][10:12])
-                )
-                if amedasTimeSeries == nowphasTimeSeries:
-                    break
+                amedasLine:list = amedasFile.readline().split(",")
+                try:
+                    amedasTimeSeries:datetime.datetime = datetime.datetime.strptime(
+                        amedasLine[0], "%Y/%m/%d %H:%M:%S"
+                    )
+                except ValueError:
+                    print("datetimeのformatが一致しない datetime:",amedasLine[0])
 
-            if (amedasLine[2] == amedasLine[5] == amedasLine[7] == amedasLine[10] == "8" ) == False:
-                print("アメダスのデータが欠損している:",amedasTimeSeries)
-                continue
-            direction = amedasLine[6]
-            if direction == "静穏":
-                print("風速が小さい:",direction)
-                continue
-            if nowphasLine[5] == "999":
-                print("ナウファスのデータが欠損している:",nowphasTimeSeries)
-                continue
+                while True:
+                    nowphasLine:list = interpretNowphasLine(nowphasFile.readline())
+                    nowphasTimeSeries:datetime.datetime = datetime.datetime(
+                        year=int(nowphasLine[0][:4]), month=int(nowphasLine[0][4:6]), 
+                        day=int(nowphasLine[0][6:8]), hour=int(nowphasLine[0][8:10]), 
+                        minute=int(nowphasLine[0][10:12])
+                    )
+                    if amedasTimeSeries == nowphasTimeSeries:
+                        lineTimeSeries:datetime.datetime = amedasTimeSeries
+                        break
 
-            velocity:float = float(amedasLine[4])
-            temperature:float = float(amedasLine[1])
-            airPressure:float = float(amedasLine[9])
-            radian:float = convertRadian(direction)
+                if (amedasLine[2] == amedasLine[5] == amedasLine[7] == amedasLine[10] == "8" ) == False:
+                    print("アメダスのデータが欠損している:",lineTimeSeries)
+                    continue
+                direction = amedasLine[6]
+                if direction == "静穏":
+                    print("風速が小さい:",direction)
+                    continue
+                if nowphasLine[5] == "999":
+                    print("ナウファスのデータが欠損している:",lineTimeSeries)
+                    continue
 
-            longitudeVelocity:float = round(velocity * math.sin(radian), 12)
-            latitudeVelocity:float = round(velocity * math.cos(radian), 12)
-            significantWaveHeight:float = nowphasLine[5]
+                velocity:float = float(amedasLine[4])
+                temperature:float = float(amedasLine[1])
+                airPressure:float = float(amedasLine[9])
+                radian:float = convertRadian(direction)
 
-            with open(
-                writeDir+amedasTimeSeries.strftime("%Y%m%d%H%M")+"csv", encoding="utf-8", mode="w"
-            ) as wf:
+                longitudeVelocity:float = round(velocity * math.sin(radian), 12)
+                latitudeVelocity:float = round(velocity * math.cos(radian), 12)
+                significantWaveHeight:float = nowphasLine[5]
+
                 wf.write(
                     "{},{},{},{},{}\n".format(
                         longitudeVelocity, 
@@ -123,3 +125,8 @@ with open(amedasFileName, encoding="shift_jis", mode="r") as amedasFile:
                         significantWaveHeight
                     )
                 )
+
+                if lineTimeSeries == datetime.datetime(year=2019, month=12, day=31, hour=23):
+                    break
+
+print("\ncompleted\n")
