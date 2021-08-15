@@ -1,5 +1,12 @@
 pip install torch==1.8.1 torchvision==0.9.1 torchaudio==0.8.1 -f https://download.pytorch.org/whl/lts/1.8/torch_lts.html
 
+pytorch dataset:
+    https://pytorch.org/tutorials/beginner/basics/data_tutorial.html#
+    https://dreamer-uma.com/pytorch-dataset/
+
+pytorch transform:
+    https://dreamer-uma.com/pytorch-transform/#TensorTransform
+
 ナウファスのデータフォーマット
 2001 1 1 0     0   166  0.94   7.1  1.42   9.8  1.69  10.1  1.95   9.3   114
 年月日時    フラグ    波数    (平均) 波高[m] 周期[sec]    (有義) 波高[m] 周期[sec]    (1/10) 波高[m] 周期[sec]    (最高) 波高[m] 周期[sec]    波向[度]

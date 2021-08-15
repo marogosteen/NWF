@@ -1,29 +1,14 @@
 import torch
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
 
-trains = transforms.ToTensor(Dataset)
-class NNWFDataset2019(Dataset):
-    def __init__(self) -> None:
-        dataDir = "data/dataset2019/"
-        amedasData = self.__readAmedas(dataDir+"amedas2019.csv")
-        self.data = "data/Dataset2019"
-        self.label = "data/Dataset2019"
+from models import nnwfDataset
 
-    def __len__(self):
-        return len(self.label)
+trainDataset:Dataset = nnwfDataset.readDataset2019_01(randomSeed=0)
+trainDataLoader = DataLoader(
+    nnwfDataset.dataset2019_01(), batch_size=10
+)
 
-    def __getitem__(self, index):
-        data:torch.Tensor = self.data[index]
-        label:torch.Tensor = self.label[index]
-        return data, label
-
-    def __readAmedas(readFilePath:str) -> torch.Tensor:
-        data:list = []
-        with open(readFilePath, encoding="Shift-jis", mode="r") as f:
-            for line in f.readlines()[6:]:
-                line = line.strip().split(",")
-                line[0]
-                
-
-        return torch.FloatTensor(data)
+print(len(nnwfDataset.dataset2019_01(train=True)))
+#trains = transforms.ToTensor(Dataset)
