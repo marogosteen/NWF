@@ -1,4 +1,4 @@
 /env/
 /.vscode/
-/src/utils/data/
-/sample/
+/make_dataset/
+/src/models/__pycache__/
