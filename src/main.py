@@ -3,7 +3,6 @@ print("\nrunning...\n")
 import torch
 from torch import nn
 from torch import optim
-from torch.tensor import Tensor
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import matplotlib.pyplot as plt
@@ -42,7 +41,6 @@ def testLoop(
             if draw:
                 predHist.extend(pred.tolist())
                 labelHist.extend(label.tolist())
-
     loss /= countBatches
 
     if draw:
@@ -50,7 +48,7 @@ def testLoop(
     else:
         return loss
     
-epochs = 100
+epochs = 500
 learningRate = 0.005
 
 trainDataset, testDataset = nnwfDataset.readDataset2019_01(randomSeed=0) 
@@ -65,17 +63,16 @@ optimizer = optim.Adam(model.parameters(), lr=learningRate)
 lossFunc = nn.MSELoss()
 print(model)
 
-
-epochs = 500
 trainLossHist = []
 testLossHist = []
-count = 1
-for epoch in range(epochs):
+count = 0
+for epoch in range(1,epochs+1):
     draw = False
-    if epoch >= int(count * epochs / 10) or epoch == 0:
+    if epoch >= int(count * epochs / 10):
         draw = True
         count += 1
         print(f"epoch: {epoch}/{epochs}")
+
     trainLossHist.append(trainLoop(trainDataLoader, model, optimizer, lossFunc))
     if draw:
         testLoss, labelHist, predHist = testLoop(
@@ -96,7 +93,6 @@ for epoch in range(epochs):
         ypAx = fig.add_subplot(
             212, title="predict", ylabel="predict wave height"
         )
-        print(sum(labelHist)/len(labelHist))
         ytAx.plot(range(len(labelHist)), labelHist)
         ypAx.plot(range(len(predHist)), predHist)
         plt.savefig(f"result/Yt_Yp{epoch}.jpg")        
