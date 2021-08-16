@@ -1,29 +1,79 @@
+print("\nrunning...\n")
+
 import torch
-from torch.utils.data import Dataset
+from torch import nn
+from torch import optim
+from torch.utils.data import DataLoader
 from torchvision import transforms
+import matplotlib.pyplot as plt
 
-trains = transforms.ToTensor(Dataset)
-class NNWFDataset2019(Dataset):
-    def __init__(self) -> None:
-        dataDir = "data/dataset2019/"
-        amedasData = self.__readAmedas(dataDir+"amedas2019.csv")
-        self.data = "data/Dataset2019"
-        self.label = "data/Dataset2019"
+from datasets import nnwfDataset
+from nnwf_models.nnwf01 import NNWF01
 
-    def __len__(self):
-        return len(self.label)
+def trainLoop(
+    dataloder:DataLoader, model:NNWF01, 
+    optimizer:optim.Adam, lossFunc:nn.MSELoss
+) -> float:
+    model.train()
+    for data, label in dataloder:
+        pred = model(data)
+        loss = lossFunc(pred, label)
 
-    def __getitem__(self, index):
-        data:torch.Tensor = self.data[index]
-        label:torch.Tensor = self.label[index]
-        return data, label
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-    def __readAmedas(readFilePath:str) -> torch.Tensor:
-        data:list = []
-        with open(readFilePath, encoding="Shift-jis", mode="r") as f:
-            for line in f.readlines()[6:]:
-                line = line.strip().split(",")
-                line[0]
-                
+    return loss.item()
 
-        return torch.FloatTensor(data)
+def testLoop(
+    dataloader:DataLoader, model:NNWF01,
+    lossFunc:nn.MSELoss,
+) -> float:
+    model.eval()
+    countBatches = len(dataloader)
+    loss = 0
+    with torch.no_grad():
+        for data, label in dataloader:
+            pred = model(data)
+            loss += lossFunc(pred, label).item()
+    
+    loss /= countBatches
+
+    return loss
+    
+epochs = 100
+learningRate = 0.05
+
+trainDataset, testDataset = nnwfDataset.readDataset2019_01(randomSeed=0)
+trainDataLoader = DataLoader(trainDataset,batch_size=64)
+testDataLoader = DataLoader(testDataset,batch_size=64)
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print('Using {} device'.format(device))
+
+model = NNWF01().to(device)
+optimizer = optim.Adam(model.parameters(), lr=learningRate)
+lossFunc = nn.MSELoss()
+print(model)
+
+
+epochs = 1000
+trainLossHist = []
+testLossHist = []
+count = 1
+for epoch in range(epochs):
+    if epoch >= int(count * epochs / 10):
+        count += 1
+        print(f"epoch: {epoch}/{epochs}")
+    trainLossHist.append(trainLoop(trainDataLoader, model, optimizer, lossFunc))
+    testLossHist.append(testLoop(testDataLoader, model, lossFunc))
+
+fig = plt.figure()
+trainAx = fig.add_subplot(
+    211, title="train MSE Loss", ylabel="MSE loss", ylabel="epochs"
+)
+testAx = fig.add_subplot(
+    212, title="test MSE Loss", ylabel="MSE loss", xlabel="epochs"
+)
+trainAx.plot(range(1,epochs+1), trainLossHist)
+testAx.plot(range(1,epochs+1), testLossHist)
