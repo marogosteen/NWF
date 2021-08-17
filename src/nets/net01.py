@@ -1,10 +1,8 @@
-import torch
 from torch import nn
-from torch.nn.modules.activation import ReLU
 
-class NNWF01(nn.Module):
+class NNWF_Net01(nn.Module):
     def __init__(self):
-        super(NNWF01, self).__init__()
+        super(NNWF_Net01, self).__init__()
         self.linearSequential = nn.Sequential(
             nn.Linear(4,128),
             nn.ReLU(),

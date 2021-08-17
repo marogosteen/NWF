@@ -8,10 +8,10 @@ from torchvision import transforms
 import matplotlib.pyplot as plt
 
 from datasets import nnwfDataset
-from nnwf_models.nnwf01 import NNWF01
+from nets import NNWF_Net01
 
 def trainLoop(
-    dataloder:DataLoader, model:NNWF01, 
+    dataloder:DataLoader, model:NNWF_Net01, 
     optimizer:optim.Adam, lossFunc:nn.MSELoss
 ) -> float:
     model.train()
@@ -26,7 +26,7 @@ def trainLoop(
     return loss.item()
 
 def testLoop(
-    dataloader:DataLoader, model:NNWF01,
+    dataloader:DataLoader, model:NNWF_Net01,
     lossFunc:nn.MSELoss, draw=False
 ) -> float:
     model.eval()
@@ -52,13 +52,17 @@ epochs = 500
 learningRate = 0.005
 
 trainDataset, testDataset = nnwfDataset.readDataset2019_01(randomSeed=0) 
-trainDataLoader = DataLoader(trainDataset,batch_size=64)
-testDataLoader = DataLoader(testDataset,batch_size=64)
+trainDataLoader = DataLoader(trainDataset, batch_size=64)
+testDataLoader = DataLoader(testDataset, batch_size=64)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print('Using {} device'.format(device))
+print(
+    "Using {} device".format(device),
+    "total data count:",len(trainDataset) + len(testDataset),
+    "\n"
+)
 
-model = NNWF01().to(device)
+model = NNWF_Net01().to(device)
 optimizer = optim.Adam(model.parameters(), lr=learningRate)
 lossFunc = nn.MSELoss()
 print(model)
@@ -66,7 +70,7 @@ print(model)
 trainLossHist = []
 testLossHist = []
 count = 0
-for epoch in range(1,epochs+1):
+for epoch in range(1, epochs+1):
     draw = False
     if epoch >= int(count * epochs / 10):
         draw = True
@@ -105,6 +109,6 @@ trainAx = fig.add_subplot(
 testAx = fig.add_subplot(
     212, title="test MSE Loss", ylabel="MSE loss", xlabel="epochs"
 )
-trainAx.plot(range(1,epochs+1), trainLossHist)
-testAx.plot(range(1,epochs+1), testLossHist)
+trainAx.plot(range(1, epochs+1), trainLossHist)
+testAx.plot(range(1, epochs+1), testLossHist)
 plt.savefig("result/loss.jpg")
