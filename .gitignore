@@ -1,5 +1,5 @@
 /env/
 /.vscode/
-/make_dataset/
+/admin/
 /result/
 *__pycache__/
