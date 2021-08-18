@@ -48,7 +48,7 @@ def testLoop(
     else:
         return loss
     
-epochs = 500
+epochs = 200
 learningRate = 0.005
 
 trainDataset, testDataset = nnwfDataset.readDataset2019_01(randomSeed=0) 
