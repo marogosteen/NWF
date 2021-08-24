@@ -62,7 +62,8 @@ testDataLoader = DataLoader(testDataset, batch_size=batch_size)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(
     "Using {} device".format(device),
-    "total data count:",len(trainDataset) + len(testDataset),
+    "total data count:", 
+    " train:", len(trainDataset), " test:", len(testDataset),
     "\n"
 )
 

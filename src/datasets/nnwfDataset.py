@@ -8,7 +8,7 @@ class NNWFDataset(IterableDataset):
 
         self.db = sqlite3.connect(database="database/dataset.db")        
         corsor = self.db.cursor()
-        self._len = corsor.execute("select count(*) from dataset01").fetchone()[0]
+        self._len = corsor.execute(f"select count(*) from dataset01 where class = '{mode}'").fetchone()[0]
 
         sql = f"select * from dataset01 where class = '{mode}'"
         self.tb = corsor.execute(sql)
