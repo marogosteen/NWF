@@ -1,6 +1,6 @@
 CREATE TABLE dataset01(
-    datatime TEXT,
-    use_class TEXT,
+    datetime TEXT,
+    class TEXT,
     latitude_velocity REAL,
     longitude_velocity REAL,
     temperature REAL,
