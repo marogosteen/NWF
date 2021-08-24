@@ -1,5 +1,6 @@
 import sqlite3
 
+import torch
 from torch.utils.data import IterableDataset
 
 class NNWFDataset(IterableDataset):
@@ -20,10 +21,10 @@ class NNWFDataset(IterableDataset):
         row = self.tb.fetchone()
         if row == None:
             self.db.close()
-            print("\n\nclose DB\n\n")
             raise StopIteration()
         
-        data = row[2:-1]
+        row = torch.FloatTensor(row[2:])
+        data = row[:-1]
         label = row[-1]
         return data, label
 
