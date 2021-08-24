@@ -7,8 +7,9 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
-from datasets import nnwfDataset
+from datasets import NNWFDataset
 from nets import NNWF_Net01
+
 
 def trainLoop(
     dataloder:DataLoader, model:NNWF_Net01, 
@@ -48,12 +49,15 @@ def testLoop(
     else:
         return loss
     
+
 epochs = 200
 learningRate = 0.005
+batch_size = 64
 
-trainDataset, testDataset = nnwfDataset.readDataset2019_01(randomSeed=0) 
-trainDataLoader = DataLoader(trainDataset, batch_size=64)
-testDataLoader = DataLoader(testDataset, batch_size=64)
+trainDataset = NNWFDataset(mode="train")
+testDataset = NNWFDataset(mode="eval")
+trainDataLoader = DataLoader(trainDataset, batch_size=batch_size)
+testDataLoader = DataLoader(testDataset, batch_size=batch_size)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(
