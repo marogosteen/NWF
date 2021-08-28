@@ -1,76 +1,38 @@
-import random
+import sqlite3
 
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import IterableDataset
 
-def readDataset2019_01(trainPercentage:float=0.7 ,randomSeed=None):
-    class MyDataset(Dataset):
-        def __init__(self, data):
-            self.data = data
 
-        def __len__(self):
-            return len(self.data)
-        
-        def __getitem__(self,index):
-            return self.data[index][:4], self.data[index][4]
+class NNWFDataset(IterableDataset):
+    def __init__(self, mode="train"):
+        super().__init__()
+        assert mode == "train" or mode == "eval", "mode is train or eval"
+        self.mode = mode
 
-    trainPercentageErrorDetection(trainPercentage)
+        self.db = sqlite3.connect(database="database/dataset.db")     
+        self.len = self.db.cursor()\
+            .execute(f"select count(*) from dataset01 where class = '{mode}'")\
+            .fetchone()[0]
 
-    if randomSeed == None:
-        random.seed()
-    else:
-        random.seed(randomSeed)
+    def __iter__(self):
+        self.tb = self.db.cursor().execute(f"select * from dataset01 where class = '{self.mode}'")
 
-    dataPath:str = "dataset/2019_01.csv"
-    data:list = loadData(dataPath)
-    random.shuffle(data)
-    data:torch.FloatTensor = torch.FloatTensor(data)
+        self.iter_counter = 0
 
-    bias = 3.5
-    grad = 4 / 2
-    data = selectData(data, grad, bias)
+        return self
 
-    trainDataCount:int = int(round(len(data) * trainPercentage,0))
-    trainData:torch.FloatTensor = data[:trainDataCount]
-    testData:torch.FloatTensor = data[trainDataCount:]
+    def __next__(self):
+        if self.iter_counter == self.len:
+            raise StopIteration
 
-    trainDataset = MyDataset(trainData)
-    testDataset = MyDataset(testData)
+        row = self.tb.fetchone()
+        row = torch.FloatTensor(row[2:])
+        data = row[:-1]
+        label = row[-1]
 
-    return trainDataset, testDataset
+        self.iter_counter += 1
+        return data, label
 
-def trainPercentageErrorDetection(trainPercentage):
-    message:str = f"trainPercentage({trainPercentage})を0以上1以下にしてください．"
-    if trainPercentage > 1.0:
-        raise Exception(message)
-    elif trainPercentage < 0.0:
-        raise Exception(message)
-
-def loadData(dataPath):
-    data:list = []
-    with open(dataPath) as f:
-        for line in f.readlines():
-            line = list(map(lambda x:float(x),line.strip().split(",")))
-            data.append(line)
-    return data
-
-def selectData(data, grad, bias):
-    heightIndex = 4
-    periodIndex = 5
-    data = data[data[:,periodIndex] < data[:,heightIndex] * grad + bias]
-    return data
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    selectedData, _ = readDataset2019_01(trainPercentage=1.0)
-    selectedData = selectedData.data
-    print("selected data shape:", selectedData.shape)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(
-        ylabel="period [sec]", xlabel="height [m]",
-        ylim=(1.5, 10), xlim=(0, 2.0)
-    )
-    ax.scatter(selectedData[:,4], selectedData[:,5])
-    
-    plt.show()
+    def __len__(self):
+        return self.len

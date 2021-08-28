@@ -3,17 +3,18 @@ print("\nrunning...\n")
 import torch
 from torch import nn
 from torch import optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, dataloader
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
-from datasets import nnwfDataset
+from datasets import NNWFDataset
 from nets import NNWF_Net01
+
 
 def trainLoop(
     dataloder:DataLoader, model:NNWF_Net01, 
-    optimizer:optim.Adam, lossFunc:nn.MSELoss
-) -> float:
+    optimizer:optim.Adam, lossFunc:nn.MSELoss) -> float:
+
     model.train()
     for data, label in dataloder:
         pred = model(data)
@@ -27,8 +28,8 @@ def trainLoop(
 
 def testLoop(
     dataloader:DataLoader, model:NNWF_Net01,
-    lossFunc:nn.MSELoss, draw=False
-) -> float:
+    lossFunc:nn.MSELoss, draw=False) -> float:
+
     model.eval()
     countBatches = len(dataloader)
     loss = 0
@@ -48,19 +49,22 @@ def testLoop(
     else:
         return loss
     
+
 epochs = 200
 learningRate = 0.005
+batch_size = 64
 
-trainDataset, testDataset = nnwfDataset.readDataset2019_01(randomSeed=0) 
-trainDataLoader = DataLoader(trainDataset, batch_size=64)
-testDataLoader = DataLoader(testDataset, batch_size=64)
+trainDataset = NNWFDataset(mode="train")
+testDataset = NNWFDataset(mode="eval")
+trainDataLoader = DataLoader(trainDataset, batch_size=batch_size)
+testDataLoader = DataLoader(testDataset, batch_size=batch_size)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(
     "Using {} device".format(device),
-    "total data count:",len(trainDataset) + len(testDataset),
-    "\n"
-)
+    "total data count:", 
+    " train:", len(trainDataset), " test:", len(testDataset),
+    "\n")
 
 model = NNWF_Net01().to(device)
 optimizer = optim.Adam(model.parameters(), lr=learningRate)
@@ -92,23 +96,22 @@ for epoch in range(1, epochs+1):
         fig = plt.figure()
         plt.subplots_adjust(hspace=0.5)
         ytAx = fig.add_subplot(
-            211, title="significant wave height", ylabel="significant wave height"
-        )
+            211, title="significant wave height", ylabel="significant wave height")
         ypAx = fig.add_subplot(
-            212, title="predict", ylabel="predict wave height"
-        )
+            212, title="predict", ylabel="predict wave height")
         ytAx.plot(range(len(labelHist)), labelHist)
         ypAx.plot(range(len(predHist)), predHist)
         plt.savefig(f"result/Yt_Yp{epoch}.jpg")        
 
+trainDataLoader.dataset.db.close()
+testDataLoader.dataset.db.close()
+
 fig = plt.figure()
 plt.subplots_adjust(hspace=0.5)
 trainAx = fig.add_subplot(
-    211, title="train MSE Loss", ylabel="MSE loss", xlabel="epochs"
-)
+    211, title="train MSE Loss", ylabel="MSE loss", xlabel="epochs")
 testAx = fig.add_subplot(
-    212, title="test MSE Loss", ylabel="MSE loss", xlabel="epochs"
-)
+    212, title="test MSE Loss", ylabel="MSE loss", xlabel="epochs")
 trainAx.plot(range(1, epochs+1), trainLossHist)
 testAx.plot(range(1, epochs+1), testLossHist)
 plt.savefig("result/loss.jpg")
