@@ -29,7 +29,7 @@ class NNWFDataset(IterableDataset):
         row = self.tb.fetchone()
         row = torch.FloatTensor(row[2:])
         data = row[:-1]
-        label = row[-1]
+        label = row[-1:]
 
         self.iter_counter += 1
         return data, label
