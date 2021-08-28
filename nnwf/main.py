@@ -54,7 +54,17 @@ def testLoop(
         return loss, labelHist, predHist
     else:
         return loss
-    
+
+def drawPredict(labelHist, predHist, epoch):
+    fig = plt.figure()
+    ytAx = fig.add_subplot(
+        111, ylabel="wave height")
+    ytAx.plot(range(len(labelHist)), labelHist, label="observed value")
+    ytAx.plot(range(len(predHist)), predHist, label="predicted value")
+    ytAx.grid()
+    ytAx.legend()
+    plt.savefig(f"result/Yt_Yp{epoch}.jpg")
+
 
 trainDataset = NNWFDataset(modelName, mode="train")
 testDataset = NNWFDataset(modelName, mode="eval")
@@ -95,18 +105,16 @@ for epoch in range(1, epochs+1):
         )
 
     if draw:        
-        fig = plt.figure()
-        plt.subplots_adjust(hspace=0.5)
-        ytAx = fig.add_subplot(
-            111, ylabel="wave height")
-        ytAx.plot(range(len(labelHist)), labelHist, label="observed value")
-        ytAx.plot(range(len(predHist)), predHist, label="predicted value")
-        ytAx.grid()
-        ytAx.legend()
-        plt.savefig(f"result/Yt_Yp{epoch}.jpg")        
+        drawPredict(labelHist, predHist, epoch)
+
+    if len(trainLossHist) - trainLossHist.index(min(trainLossHist)) > 5:
+        print(f"\nOperate early stop epoch: {epoch}\n")
+        break
 
 trainDataLoader.dataset.db.close()
 testDataLoader.dataset.db.close()
+
+drawPredict(labelHist, predHist, epoch)
 
 torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{modelName}.pt")
 
@@ -116,6 +124,6 @@ trainAx = fig.add_subplot(
     211, title="train MSE Loss", ylabel="MSE loss", xlabel="epochs")
 testAx = fig.add_subplot(
     212, title="test MSE Loss", ylabel="MSE loss", xlabel="epochs")
-trainAx.plot(range(1, epochs+1), trainLossHist)
-testAx.plot(range(1, epochs+1), testLossHist)
+trainAx.plot(range(1, len(trainLossHist)+1), trainLossHist)
+testAx.plot(range(1, len(testLossHist)+1), testLossHist)
 plt.savefig("result/loss.jpg")
