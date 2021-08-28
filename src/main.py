@@ -3,7 +3,7 @@ print("\nrunning...\n")
 import torch
 from torch import nn
 from torch import optim
-from torch.utils.data import DataLoader, dataloader
+from torch.utils.data import DataLoader
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
@@ -96,11 +96,11 @@ for epoch in range(1, epochs+1):
         fig = plt.figure()
         plt.subplots_adjust(hspace=0.5)
         ytAx = fig.add_subplot(
-            211, title="significant wave height", ylabel="significant wave height")
-        ypAx = fig.add_subplot(
-            212, title="predict", ylabel="predict wave height")
-        ytAx.plot(range(len(labelHist)), labelHist)
-        ypAx.plot(range(len(predHist)), predHist)
+            111, ylabel="wave height")
+        ytAx.plot(range(len(labelHist)), labelHist, label="observed value")
+        ytAx.plot(range(len(predHist)), predHist, label="predicted value")
+        ytAx.grid()
+        ytAx.legend()
         plt.savefig(f"result/Yt_Yp{epoch}.jpg")        
 
 trainDataLoader.dataset.db.close()
