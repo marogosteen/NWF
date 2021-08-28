@@ -11,13 +11,19 @@ from datasets import NNWFDataset
 from nets import NNWF_Net01
 
 
+epochs = 200
+learningRate = 0.005
+batch_size = 64
+modelName = "dataset01"
+
+
 def trainLoop(
-    dataloder:DataLoader, model:NNWF_Net01, 
+    dataloder:DataLoader, net, 
     optimizer:optim.Adam, lossFunc:nn.MSELoss) -> float:
 
-    model.train()
+    net.train()
     for data, label in dataloder:
-        pred = model(data)
+        pred = net(data)
         loss = lossFunc(pred, label)
 
         optimizer.zero_grad()
@@ -27,21 +33,21 @@ def trainLoop(
     return loss.item()
 
 def testLoop(
-    dataloader:DataLoader, model:NNWF_Net01,
+    dataloader:DataLoader, net,
     lossFunc:nn.MSELoss, draw=False) -> float:
 
-    model.eval()
+    net.eval()
     countBatches = len(dataloader)
     loss = 0
     labelHist = []
     predHist = []
     with torch.no_grad():
         for data, label in dataloader:
-            pred = model(data)
+            pred = net(data)
             loss += lossFunc(pred, label).item()
             if draw:
-                predHist.extend(pred.tolist())
                 labelHist.extend(label.tolist())
+                predHist.extend(pred.tolist())
     loss /= countBatches
 
     if draw:
@@ -50,12 +56,8 @@ def testLoop(
         return loss
     
 
-epochs = 200
-learningRate = 0.005
-batch_size = 64
-
-trainDataset = NNWFDataset(mode="train")
-testDataset = NNWFDataset(mode="eval")
+trainDataset = NNWFDataset(modelName, mode="train")
+testDataset = NNWFDataset(modelName, mode="eval")
 trainDataLoader = DataLoader(trainDataset, batch_size=batch_size)
 testDataLoader = DataLoader(testDataset, batch_size=batch_size)
 
@@ -66,10 +68,10 @@ print(
     " train:", len(trainDataset), " test:", len(testDataset),
     "\n")
 
-model = NNWF_Net01().to(device)
-optimizer = optim.Adam(model.parameters(), lr=learningRate)
+net = NNWF_Net01().to(device)
+optimizer = optim.Adam(net.parameters(), lr=learningRate)
 lossFunc = nn.MSELoss()
-print(model)
+print(net)
 
 trainLossHist = []
 testLossHist = []
@@ -81,15 +83,15 @@ for epoch in range(1, epochs+1):
         count += 1
         print(f"epoch: {epoch}/{epochs}")
 
-    trainLossHist.append(trainLoop(trainDataLoader, model, optimizer, lossFunc))
+    trainLossHist.append(trainLoop(trainDataLoader, net, optimizer, lossFunc))
     if draw:
         testLoss, labelHist, predHist = testLoop(
-            testDataLoader, model, lossFunc, draw=draw
+            testDataLoader, net, lossFunc, draw=draw
         )
         testLossHist.append(testLoss)
     else:
         testLossHist.append(testLoop(
-            testDataLoader, model, lossFunc, draw=draw)
+            testDataLoader, net, lossFunc, draw=draw)
         )
 
     if draw:        
@@ -105,6 +107,8 @@ for epoch in range(1, epochs+1):
 
 trainDataLoader.dataset.db.close()
 testDataLoader.dataset.db.close()
+
+torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{modelName}.pt")
 
 fig = plt.figure()
 plt.subplots_adjust(hspace=0.5)
