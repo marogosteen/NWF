@@ -1,7 +1,9 @@
 import sqlite3
 
+import numpy as np
 import torch
 from torch.utils.data import IterableDataset
+from torchvision import transforms
 
 
 class NNWFDataset(IterableDataset):
@@ -12,9 +14,11 @@ class NNWFDataset(IterableDataset):
         self.mode = mode
 
         self.db = sqlite3.connect(database="database/dataset.db")     
-        self.len = self.db.cursor()\
-            .execute(f"select count(*) from {datasetName} where class = '{mode}'")\
-            .fetchone()[0]
+        fullData = np.array(self.db.cursor()\
+            .execute(f"select * from {datasetName} where class = '{mode}'")\
+            .fetchall())[:, 2:-1].astype(np.float32)
+        self.len = len(fullData)
+        self.normalize = Custom_transform(fullData).normalize()
 
     def __iter__(self):
         self.tb = self.db.cursor().execute(f"select * from {self.datasetName} where class = '{self.mode}'")
@@ -28,7 +32,7 @@ class NNWFDataset(IterableDataset):
 
         row = self.tb.fetchone()
         row = torch.FloatTensor(row[2:])
-        data = row[:-1]
+        data = self.normalize(row[:-1])
         label = row[-1:]
 
         self.iterCounter += 1
@@ -36,3 +40,12 @@ class NNWFDataset(IterableDataset):
 
     def __len__(self):
         return self.len
+
+
+class Custom_transform():
+    def __init__(self, data:np.ndarray):
+        self.mean = data.mean(axis=0)
+        self.std = data.std(axis=0)
+    
+    def normalize(self):
+        return transforms.Lambda(lambda x:(x-self.mean)/self.std)
