@@ -13,6 +13,7 @@ class NNWF_Net01(nn.Module):
             nn.ReLU(),
             nn.Linear(32,16),
             nn.ReLU(),
+            nn.Dropout(0.3),
             nn.Linear(16,1),
         )
     
