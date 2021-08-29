@@ -10,7 +10,7 @@ from datasets import NNWFDataset
 from nets import NNWF_Net01
 
 
-epochs = 200
+epochs = 40
 learningRate = 0.005
 batch_size = 64
 modelName = "dataset01"
@@ -56,12 +56,15 @@ def testLoop(
 
 def drawPredict(labelHist, predHist, epoch):
     fig = plt.figure()
-    ytAx = fig.add_subplot(
+    ax = fig.add_subplot(
         111, ylabel="wave height")
-    ytAx.plot(range(len(labelHist)), labelHist, label="observed value")
-    ytAx.plot(range(len(predHist)), predHist, label="predicted value")
-    ytAx.grid()
-    ytAx.legend()
+    ax.plot(range(len(labelHist)), labelHist, label="observed value")
+    ax.plot(
+        range(len(predHist)), predHist, 
+        label="predicted value", alpha=0.5, color="red"
+        )
+    ax.grid()
+    ax.legend()
     plt.savefig(f"result/Yt_Yp{epoch}.jpg")
 
 
@@ -113,16 +116,11 @@ for epoch in range(1, epochs+1):
 trainDataLoader.dataset.db.close()
 testDataLoader.dataset.db.close()
 
-drawPredict(labelHist, predHist, epoch)
-
 torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{modelName}.pt")
 
 fig = plt.figure()
-plt.subplots_adjust(hspace=0.5)
-trainAx = fig.add_subplot(
-    211, title="train MSE Loss", ylabel="MSE loss", xlabel="epochs")
-testAx = fig.add_subplot(
-    212, title="test MSE Loss", ylabel="MSE loss", xlabel="epochs")
-trainAx.plot(range(1, len(trainLossHist)+1), trainLossHist)
-testAx.plot(range(1, len(testLossHist)+1), testLossHist)
+ax = fig.add_subplot(
+    111, ylabel="MSE loss", xlabel="epochs")
+ax.plot(range(1, len(trainLossHist)+1), trainLossHist)
+ax.plot(range(1, len(testLossHist)+1), testLossHist)
 plt.savefig("result/loss.jpg")
