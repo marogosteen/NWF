@@ -10,7 +10,7 @@ from datasets import NNWFDataset
 from nets import NNWF_Net01
 
 
-epochs = 40
+epochs = 50
 learningRate = 0.005
 batch_size = 64
 modelName = "dataset01"
@@ -111,7 +111,7 @@ for epoch in range(1, epochs+1):
 
     if len(trainLossHist) - trainLossHist.index(min(trainLossHist)) > 5:
         print(f"\nOperate early stop epoch: {epoch}\n")
-        break
+        #break
 
 trainDataLoader.dataset.db.close()
 testDataLoader.dataset.db.close()
@@ -121,6 +121,8 @@ torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{modelName}.pt")
 fig = plt.figure()
 ax = fig.add_subplot(
     111, ylabel="MSE loss", xlabel="epochs")
-ax.plot(range(1, len(trainLossHist)+1), trainLossHist)
-ax.plot(range(1, len(testLossHist)+1), testLossHist)
+ax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="observed")
+ax.plot(range(1, len(testLossHist)+1), testLossHist, label="predict")
+ax.grid()
+ax.legend()
 plt.savefig("result/loss.jpg")
