@@ -10,7 +10,7 @@ from datasets import NNWFDataset
 from nets import NNWF_Net01
 
 
-epochs = 50
+epochs = 100
 learningRate = 0.005
 batch_size = 64
 modelName = "dataset01"
@@ -57,7 +57,7 @@ def testLoop(
 def drawPredict(labelHist, predHist, epoch):
     fig = plt.figure()
     ax = fig.add_subplot(
-        111, ylabel="wave height")
+        111, ylabel="wave height", title=f"epoch: {epoch}")
     ax.plot(range(len(labelHist)), labelHist, label="observed value")
     ax.plot(
         range(len(predHist)), predHist, 
@@ -121,8 +121,8 @@ torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{modelName}.pt")
 fig = plt.figure()
 ax = fig.add_subplot(
     111, ylabel="MSE loss", xlabel="epochs")
-ax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="observed")
-ax.plot(range(1, len(testLossHist)+1), testLossHist, label="predict")
+ax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="train")
+ax.plot(range(1, len(testLossHist)+1), testLossHist, label="eval")
 ax.grid()
 ax.legend()
 plt.savefig("result/loss.jpg")
