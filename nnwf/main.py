@@ -63,25 +63,6 @@ def drawPredict(labelHist, predHist, epoch):
         label="predicted value", alpha=0.5, color="red")
     ax.grid()
     ax.legend()
-
-    # height_ax = fig.add_subplot(
-    #     211, ylabel="wave height", title=f"epoch: {epoch}")
-    # height_ax.plot(range(len(labelHist)), list(map(lambda x:x[0], labelHist)), label="observed value")
-    # height_ax.plot(
-    #     range(len(predHist)), list(map(lambda x:x[0], predHist)), 
-    #     label="predicted value", alpha=0.5, color="red")
-    # height_ax.grid()
-    # height_ax.legend()
-
-    # period_ax = fig.add_subplot(
-    #     212, ylabel="wave period", title=f"epoch: {epoch}")
-    # period_ax.plot(range(len(labelHist)), list(map(lambda x:x[1], labelHist)), label="observed value")
-    # period_ax.plot(
-    #     range(len(predHist)), list(map(lambda x:x[1], predHist)),
-    #     label="predicted value", alpha=0.5, color="red")
-    # period_ax.grid()
-    # period_ax.legend()
-    
     plt.savefig(f"result/Yt_Yp{epoch}.jpg")
 
 
@@ -135,10 +116,10 @@ eval_dataloader.dataset.db.close()
 torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{model_name}.pt")
 
 fig = plt.figure()
-heightax = fig.add_subplot(
+ax = fig.add_subplot(
     111, ylabel="MSE loss", xlabel="epochs")
-heightax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="train")
-heightax.plot(range(1, len(testLossHist)+1), testLossHist, label="eval")
-heightax.grid()
-heightax.legend()
+ax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="train")
+ax.plot(range(1, len(testLossHist)+1), testLossHist, label="eval")
+ax.grid()
+ax.legend()
 plt.savefig("result/loss.jpg")
