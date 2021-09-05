@@ -7,45 +7,55 @@ from torchvision import transforms
 
 
 class NNWFDataset(IterableDataset):
-    def __init__(self, datasetName:str, mode="train"):
+    def __init__(self, mode=None):
         super().__init__()
         assert mode == "train" or mode == "eval", "mode is train or eval"
-        self.datasetName = datasetName
-        self.mode = mode
 
-        self.db = sqlite3.connect(database="database/dataset.db")     
-        fullData = np.array(self.db.cursor()\
-            .execute(f"select * from {datasetName} where class = '{mode}'")\
-            .fetchall())[:, 2:-1].astype(np.float32)
-        self.len = len(fullData)
-        self.normalize = Custom_transform(fullData).normalize()
+        self.db = sqlite3.connect(database="database/dataset.db")
+        self.__query = open(f"database/query/get_{mode}_dataset.sql").read()
 
-    def __iter__(self):
-        self.tb = self.db.cursor().execute(f"select * from {self.datasetName} where class = '{self.mode}'")
-        self.iterCounter = 0
+        ndarray_full_record = self.__get_ndarray_record()
+        self.len = len(ndarray_full_record)
+        self.__normalize = Custom_transform(ndarray_full_record).normalize()
 
+    def __get_selected_record(self):
+        return self.db.cursor().execute(self.__query)
+    
+    def __get_record_iterator(self, selected_record):
+        buffer = selected_record.fetchmany(10000)
+        if len(buffer) == 0:
+            raise StopIteration
+        iterable_buffer = iter(buffer)
+        return iterable_buffer
+
+    def __get_ndarray_record(self):
+        selected_record = self.__get_selected_record().fetchall()
+        ndarrary_record = np.array(selected_record, dtype=np.float32)[:, :-2]
+        return ndarrary_record
+
+    def __iter__(self): 
+        self.__selected_record = self.__get_selected_record()
+        self.__iterable_buffer = self.__get_record_iterator(self.__selected_record)
         return self
 
     def __next__(self):
-        if self.iterCounter == self.len:
-            raise StopIteration
+        try:
+            record = torch.FloatTensor(next(self.__iterable_buffer))
+        except StopIteration:
+            self.__iterable_buffer = self.__get_record_iterator(self.__selected_record)
+            record = torch.FloatTensor(next(self.__iterable_buffer))
 
-        row = self.tb.fetchone()
-        row = torch.FloatTensor(row[2:])
-        data = self.normalize(row[:-1])
-        label = row[-1:]
-
-        self.iterCounter += 1
+        data = self.__normalize(record[:-2])
+        label = record[-2:-1]
         return data, label
 
     def __len__(self):
         return self.len
 
-
 class Custom_transform():
     def __init__(self, data:np.ndarray):
         self.mean = data.mean(axis=0)
         self.std = data.std(axis=0)
-    
+
     def normalize(self):
-        return transforms.Lambda(lambda x:(x-self.mean)/self.std)
+        return transforms.Lambda(lambda x:(x - self.mean) / self.std)
