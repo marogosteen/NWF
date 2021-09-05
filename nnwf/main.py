@@ -55,32 +55,25 @@ def testLoop(
 
 def drawPredict(labelHist, predHist, epoch):
     fig = plt.figure()
-    ax = fig.add_subplot(
-        111, ylabel="wave height", title=f"epoch: {epoch}")
-    ax.plot(range(len(labelHist)), labelHist, label="observed value")
-    ax.plot(
-        range(len(predHist)), predHist, 
+    plt.subplots_adjust(hspace=0.5)
+    
+    height_ax = fig.add_subplot(
+        211, ylabel="wave height", title=f"epoch: {epoch}")
+    height_ax.plot(range(len(labelHist)), list(map(lambda x:x[0], labelHist)), label="observed value")
+    height_ax.plot(
+        range(len(predHist)), list(map(lambda x:x[0], predHist)), 
         label="predicted value", alpha=0.5, color="red")
-    ax.grid()
-    ax.legend()
+    height_ax.grid()
+    height_ax.legend()
 
-    # height_ax = fig.add_subplot(
-    #     211, ylabel="wave height", title=f"epoch: {epoch}")
-    # height_ax.plot(range(len(labelHist)), list(map(lambda x:x[0], labelHist)), label="observed value")
-    # height_ax.plot(
-    #     range(len(predHist)), list(map(lambda x:x[0], predHist)), 
-    #     label="predicted value", alpha=0.5, color="red")
-    # height_ax.grid()
-    # height_ax.legend()
-
-    # period_ax = fig.add_subplot(
-    #     212, ylabel="wave period", title=f"epoch: {epoch}")
-    # period_ax.plot(range(len(labelHist)), list(map(lambda x:x[1], labelHist)), label="observed value")
-    # period_ax.plot(
-    #     range(len(predHist)), list(map(lambda x:x[1], predHist)),
-    #     label="predicted value", alpha=0.5, color="red")
-    # period_ax.grid()
-    # period_ax.legend()
+    period_ax = fig.add_subplot(
+        212, ylabel="wave period", title=f"epoch: {epoch}")
+    period_ax.plot(range(len(labelHist)), list(map(lambda x:x[1], labelHist)), label="observed value")
+    period_ax.plot(
+        range(len(predHist)), list(map(lambda x:x[1], predHist)),
+        label="predicted value", alpha=0.5, color="red")
+    period_ax.grid()
+    period_ax.legend()
     
     plt.savefig(f"result/Yt_Yp{epoch}.jpg")
 

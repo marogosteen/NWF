@@ -14,7 +14,7 @@ class NNWF_Net01(nn.Module):
             nn.Linear(32,16),
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(16,1),
+            nn.Linear(16,2),
         )
     
     def forward(self, x):

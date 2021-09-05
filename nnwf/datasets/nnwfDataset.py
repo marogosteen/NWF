@@ -46,7 +46,7 @@ class NNWFDataset(IterableDataset):
             record = torch.FloatTensor(next(self.__iterable_buffer))
 
         data = self.__normalize(record[:-2])
-        label = record[-2:-1]
+        label = record[-2:]
         return data, label
 
     def __len__(self):
