@@ -11,10 +11,9 @@ from nets import NNWF_Net01
 
 
 epochs = 100
-learningRate = 0.005
+learning_rate = 0.005
 batch_size = 64
-modelName = "dataset01"
-
+model_name = "nnwf01"
 
 def trainLoop(
     dataloder:DataLoader, net, 
@@ -61,49 +60,66 @@ def drawPredict(labelHist, predHist, epoch):
     ax.plot(range(len(labelHist)), labelHist, label="observed value")
     ax.plot(
         range(len(predHist)), predHist, 
-        label="predicted value", alpha=0.5, color="red"
-        )
+        label="predicted value", alpha=0.5, color="red")
     ax.grid()
     ax.legend()
+
+    # height_ax = fig.add_subplot(
+    #     211, ylabel="wave height", title=f"epoch: {epoch}")
+    # height_ax.plot(range(len(labelHist)), list(map(lambda x:x[0], labelHist)), label="observed value")
+    # height_ax.plot(
+    #     range(len(predHist)), list(map(lambda x:x[0], predHist)), 
+    #     label="predicted value", alpha=0.5, color="red")
+    # height_ax.grid()
+    # height_ax.legend()
+
+    # period_ax = fig.add_subplot(
+    #     212, ylabel="wave period", title=f"epoch: {epoch}")
+    # period_ax.plot(range(len(labelHist)), list(map(lambda x:x[1], labelHist)), label="observed value")
+    # period_ax.plot(
+    #     range(len(predHist)), list(map(lambda x:x[1], predHist)),
+    #     label="predicted value", alpha=0.5, color="red")
+    # period_ax.grid()
+    # period_ax.legend()
+    
     plt.savefig(f"result/Yt_Yp{epoch}.jpg")
 
 
-trainDataset = NNWFDataset(modelName, mode="train")
-testDataset = NNWFDataset(modelName, mode="eval")
-trainDataLoader = DataLoader(trainDataset, batch_size=batch_size)
-testDataLoader = DataLoader(testDataset, batch_size=batch_size)
+train_dataset = NNWFDataset(mode="train")
+eval_dataset = NNWFDataset(mode="eval")
+train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
+eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(
-    "Using {} device".format(device),
-    "total data count:", 
-    " train:", len(trainDataset), " test:", len(testDataset),
+    "Using {} device\n".format(device),
+    "total data count\n", 
+    " train:", len(train_dataset), " test:", len(eval_dataset),
     "\n")
 
 net = NNWF_Net01().to(device)
-optimizer = optim.Adam(net.parameters(), lr=learningRate)
-lossFunc = nn.MSELoss()
+optimizer = optim.Adam(net.parameters(), lr=learning_rate)
+loss_func = nn.MSELoss()
 print(net)
 
 trainLossHist = []
 testLossHist = []
-count = 0
+
 for epoch in range(1, epochs+1):
     draw = False
-    if epoch >= int(count * epochs / 10):
+    if epoch % int(epochs // 10) == 0 or epoch == 1:
         draw = True
-        count += 1
         print(f"epoch: {epoch}/{epochs}")
 
-    trainLossHist.append(trainLoop(trainDataLoader, net, optimizer, lossFunc))
+    trainLossHist.append(trainLoop(train_dataloader, net, optimizer, loss_func))
     if draw:
         testLoss, labelHist, predHist = testLoop(
-            testDataLoader, net, lossFunc, draw=draw
+            eval_dataloader, net, loss_func, draw=draw
         )
         testLossHist.append(testLoss)
     else:
         testLossHist.append(testLoop(
-            testDataLoader, net, lossFunc, draw=draw)
+            eval_dataloader, net, loss_func, draw=draw)
         )
 
     if draw:        
@@ -113,16 +129,16 @@ for epoch in range(1, epochs+1):
         print(f"\nOperate early stop epoch: {epoch}\n")
         #break
 
-trainDataLoader.dataset.db.close()
-testDataLoader.dataset.db.close()
+train_dataloader.dataset.db.close()
+eval_dataloader.dataset.db.close()
 
-torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{modelName}.pt")
+torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{model_name}.pt")
 
 fig = plt.figure()
-ax = fig.add_subplot(
+heightax = fig.add_subplot(
     111, ylabel="MSE loss", xlabel="epochs")
-ax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="train")
-ax.plot(range(1, len(testLossHist)+1), testLossHist, label="eval")
-ax.grid()
-ax.legend()
+heightax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="train")
+heightax.plot(range(1, len(testLossHist)+1), testLossHist, label="eval")
+heightax.grid()
+heightax.legend()
 plt.savefig("result/loss.jpg")
