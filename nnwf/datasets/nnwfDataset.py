@@ -18,8 +18,7 @@ class NNWFDataset(IterableDataset):
         self.len = len(ndarray_full_record)
         self.__normalize = Custom_transform(ndarray_full_record).normalize()
 
-        self.__wave_height = None
-        self.__wave_period = None
+        self.__past_data = None
 
     def __get_selected_record(self):
         return self.db.cursor().execute(self.__query)
@@ -39,8 +38,7 @@ class NNWFDataset(IterableDataset):
     def __iter__(self): 
         self.__selected_record = self.__get_selected_record()
         one_record = self.__selected_record.fetchone()
-        self.__wave_height = one_record[-2]
-        self.__wave_period = one_record[-1]
+        self.__past_data = torch.Tensor(one_record)
         self.__iterable_buffer = self.__get_record_iterator(self.__selected_record)
         return self
 
@@ -51,11 +49,9 @@ class NNWFDataset(IterableDataset):
             self.__iterable_buffer = self.__get_record_iterator(self.__selected_record)
             record = torch.FloatTensor(next(self.__iterable_buffer))
 
-        data = torch.cat((record[:-2], torch.Tensor([self.__wave_height, self.__wave_period])))
-        data = self.__normalize(data)
+        data = self.__normalize(self.__past_data)
         label = record[-2:]
-        self.__wave_height = label[0]
-        self.__wave_period = label[1]
+        self.__past_data = record
         return data, label
 
     def __len__(self):
