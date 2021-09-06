@@ -78,10 +78,7 @@ def drawPredict(labelHist, predHist, epoch):
     plt.savefig(f"result/Yt_Yp{epoch}.jpg")
 
 
-train_dataset = NNWFDataset(mode="train")
-eval_dataset = NNWFDataset(mode="eval")
-
-with NNWFDataset(mode="train") as train_dataset, NNWFDataset(mode="eval") as test_dataset:
+with NNWFDataset(mode="train") as train_dataset, NNWFDataset(mode="eval") as eval_dataset:
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
     eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size)
 
