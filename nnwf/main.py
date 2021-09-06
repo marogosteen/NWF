@@ -80,58 +80,57 @@ def drawPredict(labelHist, predHist, epoch):
 
 train_dataset = NNWFDataset(mode="train")
 eval_dataset = NNWFDataset(mode="eval")
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
-eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size)
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print(
-    "Using {} device\n".format(device),
-    "total data count\n", 
-    " train:", len(train_dataset), " test:", len(eval_dataset),
-    "\n")
+with NNWFDataset(mode="train") as train_dataset, NNWFDataset(mode="eval") as test_dataset:
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size)
 
-net = NNWF_Net01().to(device)
-optimizer = optim.Adam(net.parameters(), lr=learning_rate)
-loss_func = nn.MSELoss()
-print(net)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(
+        "Using {} device\n".format(device),
+        "total data count\n", 
+        " train:", len(train_dataset), " test:", len(eval_dataset),
+        "\n")
 
-trainLossHist = []
-testLossHist = []
+    net = NNWF_Net01().to(device)
+    optimizer = optim.Adam(net.parameters(), lr=learning_rate)
+    loss_func = nn.MSELoss()
+    print(net)
 
-for epoch in range(1, epochs+1):
-    draw = False
-    if epoch % int(epochs // 10) == 0 or epoch == 1:
-        draw = True
-        print(f"epoch: {epoch}/{epochs}")
+    trainLossHist = []
+    testLossHist = []
 
-    trainLossHist.append(trainLoop(train_dataloader, net, optimizer, loss_func))
-    if draw:
-        testLoss, labelHist, predHist = testLoop(
-            eval_dataloader, net, loss_func, draw=draw
-        )
-        testLossHist.append(testLoss)
-    else:
-        testLossHist.append(testLoop(
-            eval_dataloader, net, loss_func, draw=draw)
-        )
+    for epoch in range(1, epochs+1):
+        draw = False
+        if epoch % int(epochs // 10) == 0 or epoch == 1:
+            draw = True
+            print(f"epoch: {epoch}/{epochs}")
 
-    if draw:        
-        drawPredict(labelHist, predHist, epoch)
+        trainLossHist.append(trainLoop(train_dataloader, net, optimizer, loss_func))
+        if draw:
+            testLoss, labelHist, predHist = testLoop(
+                eval_dataloader, net, loss_func, draw=draw
+            )
+            testLossHist.append(testLoss)
+        else:
+            testLossHist.append(testLoop(
+                eval_dataloader, net, loss_func, draw=draw)
+            )
 
-    if len(trainLossHist) - trainLossHist.index(min(trainLossHist)) > 5:
-        print(f"\nOperate early stop epoch: {epoch}\n")
-        #break
+        if draw:        
+            drawPredict(labelHist, predHist, epoch)
 
-train_dataloader.dataset.db.close()
-eval_dataloader.dataset.db.close()
+        if len(trainLossHist) - trainLossHist.index(min(trainLossHist)) > 5:
+            print(f"\nOperate early stop epoch: {epoch}\n")
 
-torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{model_name}.pt")
 
-fig = plt.figure()
-ax = fig.add_subplot(
-    111, ylabel="MSE loss", xlabel="epochs")
-ax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="train")
-ax.plot(range(1, len(testLossHist)+1), testLossHist, label="eval")
-ax.grid()
-ax.legend()
-plt.savefig("result/loss.jpg")
+    torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{model_name}.pt")
+
+    fig = plt.figure()
+    ax = fig.add_subplot(
+        111, ylabel="MSE loss", xlabel="epochs")
+    ax.plot(range(1, len(trainLossHist)+1), trainLossHist, label="train")
+    ax.plot(range(1, len(testLossHist)+1), testLossHist, label="eval")
+    ax.grid()
+    ax.legend()
+    plt.savefig("result/loss.jpg")
