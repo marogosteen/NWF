@@ -57,6 +57,12 @@ class NNWFDataset(IterableDataset):
     def __len__(self):
         return self.len
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.db.close()
+
 class Custom_transform():
     def __init__(self, data:np.ndarray):
         self.mean = data.mean(axis=0)
