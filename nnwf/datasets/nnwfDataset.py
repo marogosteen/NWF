@@ -54,9 +54,6 @@ class Base_NNWFDataset(IterableDataset):
         self.__past_data = record
         return data, label
 
-    def __len__(self):
-        return self.len
-
     def __enter__(self):
         return self
 
@@ -78,4 +75,6 @@ class Train_NNWFDataset(Base_NNWFDataset):
 class Eval_NNWFDataset(Base_NNWFDataset):
     def __init__(self):
         super(Eval_NNWFDataset, self).__init__("eval")
-        self.real_val = [real_val for real_val in self]
+    
+    def get_real_values(self):
+        return torch.stack([val for data, val in self], dim=0)

@@ -47,7 +47,7 @@ class Train_model():
         self.net =  NNWF_Net01().to(device)
         self.optimizer = optim.Adam(self.net.parameters(), lr=learning_rate)
         self.loss_func = nn.MSELoss()
-        self.real_val = eval_dataloader.dataset.hoge
+        self.real_values = eval_dataloader.dataset.get_real_values()
 
     def train(self) -> float:
         net = self.net.train()
@@ -85,7 +85,7 @@ class Train_model():
         
         height_ax = fig.add_subplot(
             211, ylabel="wave height", title=f"epoch: {epoch}")
-        height_ax.plot(range(len(self.real_val)), list(map(lambda x:x[0], self.real_val)), label="observed value")
+        height_ax.plot(range(len(self.real_values)), list(map(lambda x:x[0], self.real_values)), label="observed value")
         height_ax.plot(
             range(len(predHist)), list(map(lambda x:x[0], predHist)), 
             label="predicted value", alpha=0.5, color="red")
@@ -94,7 +94,7 @@ class Train_model():
 
         period_ax = fig.add_subplot(
             212, ylabel="wave period", title=f"epoch: {epoch}")
-        period_ax.plot(range(len(self.real_val)), list(map(lambda x:x[1], self.real_val)), label="observed value")
+        period_ax.plot(range(len(self.real_values)), list(map(lambda x:x[1], self.real_values)), label="observed value")
         period_ax.plot(
             range(len(predHist)), list(map(lambda x:x[1], predHist)),
             label="predicted value", alpha=0.5, color="red")
