@@ -6,7 +6,7 @@ from torch.utils.data import IterableDataset
 from torchvision import transforms
 
 
-class NNWFDataset(IterableDataset):
+class Base_NNWFDataset(IterableDataset):
     def __init__(self, mode=None):
         super().__init__()
         assert mode == "train" or mode == "eval", "mode is train or eval"
@@ -70,3 +70,12 @@ class Custom_transform():
 
     def normalize(self):
         return transforms.Lambda(lambda x:(x - self.mean) / self.std)
+
+class Train_NNWFDataset(Base_NNWFDataset):
+    def __init__(self):
+        super(Train_NNWFDataset, self).__init__("train")
+
+class Eval_NNWFDataset(Base_NNWFDataset):
+    def __init__(self):
+        super(Eval_NNWFDataset, self).__init__("eval")
+        self.real_val = [real_val for real_val in self]

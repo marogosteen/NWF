@@ -1,1 +1,1 @@
-from .nnwfDataset import NNWFDataset
+from .nnwfDataset import Train_NNWFDataset, Eval_NNWFDataset
