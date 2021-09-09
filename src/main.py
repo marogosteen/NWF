@@ -37,7 +37,7 @@ def main():
             if len(train_loss_hist) - train_loss_hist.index(min(train_loss_hist)) > 5:
                 print(f"\nOperate early stop epoch: {epoch}\n")
 
-        torch.save(train_model.net.state_dict(), f"nnwf/nets/state_dicts/{model_name}.pt")
+        torch.save(train_model.net.state_dict(), f"src/nets/state_dicts/{model_name}.pt")
 
 class Train_model():
     def __init__(self, train_dataloader, eval_dataloader):
