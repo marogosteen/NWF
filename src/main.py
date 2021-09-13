@@ -23,6 +23,10 @@ def main():
     loss_hist_model = Loss_hist_model()
 
     with Train_NNWFDataset() as train_dataset, Eval_NNWFDataset() as eval_dataset:
+        print(
+            "\ntrain length: {}\neval length :{}\n".format(len(train_dataset), len(eval_dataset)),
+        )
+
         real_values = eval_dataset.get_real_values()
         train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
         eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size)
