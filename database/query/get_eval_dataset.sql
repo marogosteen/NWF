@@ -22,4 +22,5 @@ WHERE
     amedas_tomogashima.inferiority = 0 AND
     nowphas_kobe.inferiority = 0 AND
     purpose.purpose = 'eval'
+ORDER BY amedas.datetime
 ;
