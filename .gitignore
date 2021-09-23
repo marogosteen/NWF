@@ -2,3 +2,5 @@
 /.vscode/
 /admin/
 *__pycache__/
+/database/
+/result/
