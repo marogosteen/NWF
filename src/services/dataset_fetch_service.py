@@ -22,7 +22,7 @@ class Dataset_service():
         return self.__curosr.fetchall()
 
     def next_buffer(self) -> list:
-        return self.__curosr.fetchmany(10000)
+        return self.__curosr.fetchmany(5000)
 
     def truedata(self, forecast_hour:int) -> torch.Tensor:
         full_record_ndarray = torch.Tensor(self.full_record())

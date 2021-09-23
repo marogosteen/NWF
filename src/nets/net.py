@@ -5,7 +5,7 @@ class NNWF_Net(nn.Module):
     def __init__(self):
         super(NNWF_Net, self).__init__()
         self.linearSequential = nn.Sequential(
-            nn.Linear(11,128),
+            nn.Linear(22,128),
             nn.ReLU(),
             nn.Linear(128,64),
             nn.ReLU(),

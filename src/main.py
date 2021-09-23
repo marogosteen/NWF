@@ -10,14 +10,7 @@ from torchvision import transforms
 from datasets import Train_NNWFDataset, Eval_NNWFDataset
 from nets import NNWF_Net
 from services import Dataset_service
-"""
-dataset.__truedataをMainで扱うか とは言え、DSでも必要やしー まあこれやなー。
 
-EvalDSにTrainServiceを入れるか　とは言え、
-
-別のクラスをインスタンスするか　なら構造をどうしよか
-    Model作る？　とは言え、DSがModel扱いやし。
-"""
 
 def main():
     epochs = 100
