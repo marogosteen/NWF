@@ -71,15 +71,6 @@ class Train_NNWFDataset(IterableDataset):
     def __exit__(self, exc_type, exc_value, traceback):
         self.__service.db.close()
 
-    # class __Custom_transform():
-    #     def __init__(self, data:np.ndarray):
-    #         self.mean = data.mean(axis=0).astype(np.float16)
-    #         self.std = data.std(axis=0).astype(np.float16)
-    #         print(f"data\n\tmean:{self.mean}\n\tstd:{self.std}\n")
-
-    #     def normalize(self) -> transforms.Lambda:
-    #         return transforms.Lambda(lambda x:(x - self.mean) / self.std)
-
     def __costom_transform(self) -> transforms.Lambda:
         train_service = Dataset_service("train")
         truedata:torch.Tensor = train_service.truedata(self.__forecast_hour)[:, 2:]
