@@ -13,8 +13,7 @@ class Train_NNWFDataset(IterableDataset):
     """
     __inferiorityColumnIndex = 1
     __forecast_hour = 1
-    # 何時間分の学習なのか
-    __foo_hour = 2
+    __train_hour = 2
 
     def __init__(self, service:Dataset_service):
         """
@@ -37,7 +36,7 @@ class Train_NNWFDataset(IterableDataset):
         self.__iterable_buffer = iter(self.__service.next_buffer())
         self.__past_data = []
 
-        for count in range(self.__forecast_hour + self.__foo_hour - 1):
+        for count in range(self.__forecast_hour + self.__train_hour - 1):
             record = torch.Tensor(next(self.__iterable_buffer))
             self.__past_data.append(record)
         return self
@@ -59,24 +58,15 @@ class Train_NNWFDataset(IterableDataset):
             if inferiority_count == 0:
                 break
             else:
-                self.__past_data.pop()
-            # past_record = self.__past_data.pop(0)
-            # self.__foo.append(past_record)
-
-            # now_inferiority = record[self.__inferiorityColumnIndex]
-            # past_inferiority = past_record[self.__inferiorityColumnIndex]
-            # if now_inferiority == past_inferiority == 0:
-            #     break
+                self.__past_data.pop(0)
 
         data = []
-        for index in range(self.__foo_hour):
+        for index in range(self.__train_hour):
             data.append(self.__transform(self.__past_data[index][2:]))
         data = torch.cat(data, dim=0)
         ans = self.__past_data[-1][-2:]
         self.__past_data.pop(0)
 
-        # data = self.__transform(past_record[2:])
-        # ans = record[-2:]
         return data, ans
 
     def __enter__(self):

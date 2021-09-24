@@ -17,6 +17,7 @@ def main():
     batch_size = 128
     learning_rate = 0.005
     model_name = "nnwf01"
+    
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     train_service = Dataset_service("train")
