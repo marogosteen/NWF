@@ -15,7 +15,7 @@ class Train_NNWFDataset(IterableDataset):
     __forecast_hour = 1
     __train_hour = 2
 
-    def __init__(self, service:Dataset_service):
+    def __init__(self, service: Dataset_service):
         """
         Base_NNWFDatasetのコンストラクタ。
 
@@ -31,7 +31,7 @@ class Train_NNWFDataset(IterableDataset):
     def __len__(self):
         return self.len
 
-    def __iter__(self): 
+    def __iter__(self):
         self.__service.select_record()
         self.__iterable_buffer = iter(self.__service.next_buffer())
         self.__past_data = []
@@ -49,12 +49,13 @@ class Train_NNWFDataset(IterableDataset):
                 buffer = self.__service.next_buffer()
                 if len(buffer) == 0:
                     raise StopIteration
-                
+
                 self.__iterable_buffer = iter(buffer)
                 record = torch.FloatTensor(next(self.__iterable_buffer))
 
             self.__past_data.append(record)
-            inferiority_count = list(map(lambda x: x[self.__inferiorityColumnIndex], self.__past_data)).count(1)
+            inferiority_count = list(
+                map(lambda x: x[self.__inferiorityColumnIndex], self.__past_data)).count(1)
             if inferiority_count == 0:
                 break
             else:
@@ -64,7 +65,7 @@ class Train_NNWFDataset(IterableDataset):
         for index in range(self.__train_hour):
             data.append(self.__transform(self.__past_data[index][2:]))
         data = torch.cat(data, dim=0)
-        ans = self.__past_data[-1][-2:]
+        ans = self.__past_data[-1][-2:-1]
         self.__past_data.pop(0)
 
         return data, ans
@@ -77,17 +78,18 @@ class Train_NNWFDataset(IterableDataset):
 
     def __costom_transform(self) -> transforms.Lambda:
         train_service = Dataset_service("train")
-        truedata:torch.Tensor = train_service.truedata(self.__forecast_hour)[:, 2:]
+        truedata: torch.Tensor = train_service.truedata(
+            self.__forecast_hour)[:, 2:]
         data_mean = truedata.mean(axis=0)
         data_std = truedata.std(axis=0)
         print(f"data\n\tmean:{data_mean}\n\tstd:{data_std}\n")
-        return transforms.Lambda(lambda x:(x - data_mean) / data_std)
+        return transforms.Lambda(lambda x: (x - data_mean) / data_std)
 
 
 class Eval_NNWFDataset(Train_NNWFDataset):
     def __init__(
-        self, service:Dataset_service):
+            self, service: Dataset_service):
         super(Eval_NNWFDataset, self).__init__(service)
-    
+
     def get_real_values(self) -> torch.Tensor:
         return torch.stack([val for data, val in self], dim=0)

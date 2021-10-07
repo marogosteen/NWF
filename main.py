@@ -1,9 +1,9 @@
-from torchvision import transforms
 import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader
-from torch import optim
-from torch import nn
 import torch
+from torch import nn
+from torch import optim
+from torch.utils.data import DataLoader
+from torchvision import transforms
 
 from services import Dataset_service
 from nets import NNWF_Net
@@ -12,11 +12,14 @@ from datasets import Train_NNWFDataset, Eval_NNWFDataset
 
 print("\nrunning...\n")
 
+# TODO ServiceのSQL書き換えが必要？？
+
 
 def main():
+    # TODO 学習のクラス化
     epochs = 100
     batch_size = 128
-    learning_rate = 0.005
+    learning_rate = 0.001
     model_name = "nnwf01"
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -28,7 +31,7 @@ def main():
     loss_func = nn.MSELoss()
     loss_hist_model = Loss_hist_model()
 
-    # メゾットとかで、簡素化したい。
+    # TODO メゾットとかで、簡素化したい。
     with Train_NNWFDataset(train_service) as train_dataset, \
             Eval_NNWFDataset(eval_service) as eval_dataset:
 
@@ -56,35 +59,32 @@ def main():
                 train_loss.backward()
                 optimizer.step()
 
-            extract_height_loss, extract_period_loss = compute_extract_loss(
+            # TODO compute_extract_loss気に食わん
+            extract_height_loss = compute_extract_loss(
                 pred, real_val)
             loss_hist_model.waveheight_train.append(extract_height_loss)
-            loss_hist_model.waveperiod_train.append(extract_period_loss)
             loss_hist_model.train.append(train_loss.item())
 
             eval_net = net.eval()
             count_batches = len(eval_dataloader)
             height_eval_loss = 0
-            period_eval_loss = 0
             eval_loss = 0
             pred_hist = []
             with torch.no_grad():
                 for data, real_val in eval_dataloader:
                     pred = eval_net(data)
                     eval_loss += loss_func(pred, real_val).item()
-                    extract_height_loss, extract_period_loss = compute_extract_loss(
+                    extract_height_loss = compute_extract_loss(
                         pred, real_val)
                     height_eval_loss += extract_height_loss
-                    period_eval_loss += extract_period_loss
 
                     if draw_mode:
                         pred_hist.extend(pred.tolist())
 
             height_eval_loss /= count_batches
-            period_eval_loss /= count_batches
             eval_loss /= count_batches
             loss_hist_model.waveheight_eval.append(height_eval_loss)
-            loss_hist_model.waveperiod_eval.append(period_eval_loss)
+
             loss_hist_model.eval.append(eval_loss)
 
             if draw_mode:
@@ -96,11 +96,12 @@ def main():
                 draw_predict(extract_real_values,
                              extract_pred_hist, "e"+str(epoch))
 
-            if len(loss_hist_model.train) - loss_hist_model.train.index(min(loss_hist_model.train)) > 5:
+            # TODO early func 書こう
+            if len(loss_hist_model.eval) - loss_hist_model.eval.index(min(loss_hist_model.eval)) > 5:
                 print(f"\nOperate early stop epoch: {epoch}\n")
 
     loss_hist_model.draw_loss(model_name)
-    torch.save(net.state_dict(), f"src/nets/state_dicts/{model_name}.pt")
+    torch.save(net.state_dict(), f"nets/state_dicts/{model_name}.pt")
 
 
 def compute_extract_loss(pred, real):
@@ -109,8 +110,7 @@ def compute_extract_loss(pred, real):
     extract_pred = pred[extract_bool]
     extract_real = real[extract_bool]
     height_loss = loss_func(extract_pred[:, 0], extract_real[:, 0]).item()
-    period_loss = loss_func(extract_pred[:, 1], extract_real[:, 1]).item()
-    return height_loss, period_loss
+    return height_loss
 
 
 def draw_predict(real_values, predHist, epoch):
@@ -118,7 +118,7 @@ def draw_predict(real_values, predHist, epoch):
     plt.subplots_adjust(hspace=0.5)
 
     height_ax = fig.add_subplot(
-        211, ylabel="wave height", title=f"epoch: {epoch}")
+        111, ylabel="wave height", title=f"epoch: {epoch}")
     height_ax.plot(range(len(real_values)), list(
         map(lambda x: x[0], real_values)), label="observed value")
     height_ax.plot(
@@ -127,15 +127,15 @@ def draw_predict(real_values, predHist, epoch):
     height_ax.grid()
     height_ax.legend()
 
-    period_ax = fig.add_subplot(
-        212, ylabel="wave period", title=f"epoch: {epoch}")
-    period_ax.plot(range(len(real_values)), list(
-        map(lambda x: x[1], real_values)), label="observed value")
-    period_ax.plot(
-        range(len(predHist)), list(map(lambda x: x[1], predHist)),
-        label="predicted value", alpha=0.5, color="red")
-    period_ax.grid()
-    period_ax.legend()
+    # period_ax = fig.add_subplot(
+    #     212, ylabel="wave period", title=f"epoch: {epoch}")
+    # period_ax.plot(range(len(real_values)), list(
+    #     map(lambda x: x[1], real_values)), label="observed value")
+    # period_ax.plot(
+    #     range(len(predHist)), list(map(lambda x: x[1], predHist)),
+    #     label="predicted value", alpha=0.5, color="red")
+    # period_ax.grid()
+    # period_ax.legend()
 
     plt.savefig(f"result/Yt_Yp{epoch}.jpg")
 
@@ -146,8 +146,8 @@ class Loss_hist_model():
         self.eval = []
         self.waveheight_train = []
         self.waveheight_eval = []
-        self.waveperiod_train = []
-        self.waveperiod_eval = []
+        # self.waveperiod_train = []
+        # self.waveperiod_eval = []
 
     def draw_loss(self, model_name):
         fig = plt.figure()
@@ -165,12 +165,12 @@ class Loss_hist_model():
                          self.waveheight_eval)
         plt.savefig(f"result/height_loss.jpg")
 
-        fig = plt.figure()
-        period_ax = fig.add_subplot(
-            111, ylabel="Period MSE loss", xlabel="epochs")
-        self.__plot_loss(period_ax, self.waveperiod_train,
-                         self.waveperiod_eval)
-        plt.savefig(f"result/period_loss.jpg")
+        # fig = plt.figure()
+        # period_ax = fig.add_subplot(
+        #     111, ylabel="Period MSE loss", xlabel="epochs")
+        # self.__plot_loss(period_ax, self.waveperiod_train,
+        #                  self.waveperiod_eval)
+        # plt.savefig(f"result/period_loss.jpg")
 
     def __plot_loss(self, ax, train_loss, eval_loss):
         ax.plot(range(1, len(train_loss)+1), train_loss, label="train")
