@@ -12,7 +12,8 @@ from datasets import Train_NNWFDataset, Eval_NNWFDataset
 
 print("\nrunning...\n")
 
-# TODO ServiceのSQL書き換えが必要？？
+# TODO 波高のみの予測にしたので、ServiceのSQL書き換えが必要？？
+# TODO transformsのクラスをMainでインスタンス
 
 
 def main():
@@ -127,17 +128,8 @@ def draw_predict(real_values, predHist, epoch):
     height_ax.grid()
     height_ax.legend()
 
-    # period_ax = fig.add_subplot(
-    #     212, ylabel="wave period", title=f"epoch: {epoch}")
-    # period_ax.plot(range(len(real_values)), list(
-    #     map(lambda x: x[1], real_values)), label="observed value")
-    # period_ax.plot(
-    #     range(len(predHist)), list(map(lambda x: x[1], predHist)),
-    #     label="predicted value", alpha=0.5, color="red")
-    # period_ax.grid()
-    # period_ax.legend()
-
     plt.savefig(f"result/Yt_Yp{epoch}.jpg")
+    plt.close(fig)
 
 
 class Loss_hist_model():
@@ -146,13 +138,9 @@ class Loss_hist_model():
         self.eval = []
         self.waveheight_train = []
         self.waveheight_eval = []
-        # self.waveperiod_train = []
-        # self.waveperiod_eval = []
 
     def draw_loss(self, model_name):
         fig = plt.figure()
-        # plt.subplots_adjust(hspace=0.5)
-
         ax = fig.add_subplot(
             111, title="loss", ylabel="MSE loss", xlabel="epochs")
         self.__plot_loss(ax, self.train, self.eval)
@@ -164,13 +152,6 @@ class Loss_hist_model():
         self.__plot_loss(height_ax, self.waveheight_train,
                          self.waveheight_eval)
         plt.savefig(f"result/height_loss.jpg")
-
-        # fig = plt.figure()
-        # period_ax = fig.add_subplot(
-        #     111, ylabel="Period MSE loss", xlabel="epochs")
-        # self.__plot_loss(period_ax, self.waveperiod_train,
-        #                  self.waveperiod_eval)
-        # plt.savefig(f"result/period_loss.jpg")
 
     def __plot_loss(self, ax, train_loss, eval_loss):
         ax.plot(range(1, len(train_loss)+1), train_loss, label="train")
