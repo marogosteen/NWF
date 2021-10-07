@@ -14,6 +14,10 @@ print("\nrunning...\n")
 
 # TODO 波高のみの予測にしたので、ServiceのSQL書き換えが必要？？
 # TODO transformsのクラスをMainでインスタンス
+# TODO Unit test 実装したい
+# TODO 気圧と時刻の学習
+# TODO early stop 実装したい
+# TODO async await 実装するべき
 
 
 def main():

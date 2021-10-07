@@ -11,9 +11,9 @@ class Train_NNWFDataset(IterableDataset):
     TrainまたはEvalのどちらかの使用用途に合わせて、DBからデータを出力するSuperClass。
     withとforを用いて出力することを前提としている。
     """
-    __inferiorityColumnIndex = 1
-    __forecast_hour = 1
-    __train_hour = 2
+    _inferiorityColumnIndex = 1
+    _forecast_hour = 1
+    _train_hour = 2
 
     def __init__(self, service: Dataset_service):
         """
@@ -24,21 +24,21 @@ class Train_NNWFDataset(IterableDataset):
         """
         super(Train_NNWFDataset).__init__()
 
-        self.__service = service
-        self.len = len(service.truedata(self.__forecast_hour))
-        self.__transform = self.__costom_transform()
+        self._service = service
+        self.len = len(service.truedata(self._forecast_hour))
+        self._transform = self.__costom_transform()
 
     def __len__(self):
         return self.len
 
     def __iter__(self):
-        self.__service.select_record()
-        self.__iterable_buffer = iter(self.__service.next_buffer())
-        self.__past_data = []
+        self._service.select_record()
+        self._iterable_buffer = iter(self._service.next_buffer())
+        self._past_data = []
 
-        for count in range(self.__forecast_hour + self.__train_hour - 1):
+        for count in range(self._forecast_hour + self._train_hour - 1):
             record = torch.Tensor(next(self.__iterable_buffer))
-            self.__past_data.append(record)
+            self._past_data.append(record)
         return self
 
     def __next__(self):
@@ -46,27 +46,27 @@ class Train_NNWFDataset(IterableDataset):
             try:
                 record = torch.FloatTensor(next(self.__iterable_buffer))
             except StopIteration:
-                buffer = self.__service.next_buffer()
+                buffer = self._service.next_buffer()
                 if len(buffer) == 0:
                     raise StopIteration
 
                 self.__iterable_buffer = iter(buffer)
                 record = torch.FloatTensor(next(self.__iterable_buffer))
 
-            self.__past_data.append(record)
+            self._past_data.append(record)
             inferiority_count = list(
-                map(lambda x: x[self.__inferiorityColumnIndex], self.__past_data)).count(1)
+                map(lambda x: x[self._inferiorityColumnIndex], self._past_data)).count(1)
             if inferiority_count == 0:
                 break
             else:
-                self.__past_data.pop(0)
+                self._past_data.pop(0)
 
         data = []
-        for index in range(self.__train_hour):
-            data.append(self.__transform(self.__past_data[index][2:]))
+        for index in range(self._train_hour):
+            data.append(self._transform(self._past_data[index][2:]))
         data = torch.cat(data, dim=0)
-        ans = self.__past_data[-1][-2:-1]
-        self.__past_data.pop(0)
+        ans = self._past_data[-1][-2:-1]
+        self._past_data.pop(0)
 
         return data, ans
 
@@ -74,7 +74,7 @@ class Train_NNWFDataset(IterableDataset):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.__service.db.close()
+        self._service.db.close()
 
     def __costom_transform(self) -> transforms.Lambda:
         train_service = Dataset_service("train")
