@@ -5,9 +5,11 @@ from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+from torchvision import transforms
 
 from datasets import Train_NNWFDataset, Eval_NNWFDataset
-from nets import NNWF_Net01
+from nets import NNWF_Net
+from services import Dataset_service
 
 
 def main():
@@ -15,14 +17,22 @@ def main():
     batch_size = 128
     learning_rate = 0.005
     model_name = "nnwf01"
+    
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    net =  NNWF_Net01().to(device)
+    train_service = Dataset_service("train")
+    eval_service = Dataset_service("eval")
+
+    net =  NNWF_Net().to(device)
     optimizer = optim.Adam(net.parameters(), lr=learning_rate)
     loss_func = nn.MSELoss()
     loss_hist_model = Loss_hist_model()
 
-    with Train_NNWFDataset() as train_dataset, Eval_NNWFDataset() as eval_dataset:
+    with Train_NNWFDataset(train_service) as train_dataset, \
+        Eval_NNWFDataset(eval_service) as eval_dataset:
+
+        print(f"train length:{len(train_dataset)}\neval: length:{len(eval_dataset)}\n")
+
         real_values = eval_dataset.get_real_values()
         train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
         eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size)
@@ -42,9 +52,6 @@ def main():
                 optimizer.zero_grad()
                 train_loss.backward()
                 optimizer.step()
-
-            # loss_hist_model.waveheight_train.append(loss_func(pred[:,0], real_val[:,0]).item())
-            # loss_hist_model.waveperiod_train.append(loss_func(pred[:,1], real_val[:,1]).item())
 
             extract_height_loss, extract_period_loss = compute_extract_loss(pred, real_val)
             loss_hist_model.waveheight_train.append(extract_height_loss)
@@ -88,6 +95,7 @@ def main():
 
     loss_hist_model.draw_loss(model_name)
     torch.save(net.state_dict(), f"src/nets/state_dicts/{model_name}.pt")
+
 
 def compute_extract_loss(pred, real):
     loss_func = nn.MSELoss()

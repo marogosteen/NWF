@@ -1,4 +1,4 @@
-CREATE TABLE nowphas_kobe(
+CREATE TABLE nowphas(
     datetime INTEGER,
     inferiority INTEGER,
     mean_height REAL,
