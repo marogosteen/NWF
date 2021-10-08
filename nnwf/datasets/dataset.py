@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 from torchvision import transforms
@@ -79,7 +78,7 @@ class Train_NNWFDataset(IterableDataset):
     def __costom_transform(self) -> transforms.Lambda:
         train_service = Dataset_service("train")
         truedata: torch.Tensor = train_service.truedata(
-            self.__forecast_hour)[:, 2:]
+            self._forecast_hour)[:, 2:]
         data_mean = truedata.mean(axis=0)
         data_std = truedata.std(axis=0)
         print(f"data\n\tmean:{data_mean}\n\tstd:{data_std}\n")
