@@ -1,94 +1,132 @@
+import math
+
+from sqlalchemy import create_engine, orm
 import torch
 from torch.utils.data import IterableDataset
 from torchvision import transforms
 
-from services import Dataset_service
+from nnwf.datasets import orm as nnwf_orm
 
 
-class Train_NNWFDataset(IterableDataset):
-    """
-    TrainまたはEvalのどちらかの使用用途に合わせて、DBからデータを出力するSuperClass。
-    withとforを用いて出力することを前提としている。
-    """
-    _inferiorityColumnIndex = 1
-    _forecast_hour = 1
-    _train_hour = 2
+class DatasetBaseModel(IterableDataset):
+    def __init__(self, forecast_hour: int, train_hour: int):
+        super(DatasetBaseModel).__init__()
+        engine = create_engine("sqlite:///database/dataset.db", echo=True)
+        SessionClass = orm.sessionmaker(engine)
+        self._active_session: orm.session.Session = SessionClass()
+        self._sqlresult = nnwf_orm.get_sqlresult(self._active_session)
+        self.forecast_hour = forecast_hour
+        self.train_hour = train_hour
+        self.len
+        self.mean
+        self.std
 
-    def __init__(self, service: Dataset_service):
-        """
-        Base_NNWFDatasetのコンストラクタ。
-
-        Args:
-            service(Dataset_service) : DBからデータを読み込むService
-        """
-        super(Train_NNWFDataset).__init__()
-
-        self._service = service
-        self.len = len(service.truedata(self._forecast_hour))
-        self._transform = self.__costom_transform()
-
-    def __len__(self):
-        return self.len
-
-    def __iter__(self):
-        self._service.select_record()
-        self._iterable_buffer = iter(self._service.next_buffer())
-        self._past_data = []
-
-        for count in range(self._forecast_hour + self._train_hour - 1):
-            record = torch.Tensor(next(self.__iterable_buffer))
-            self._past_data.append(record)
-        return self
-
-    def __next__(self):
+    def __datainfo(self):
         while True:
-            try:
-                record = torch.FloatTensor(next(self.__iterable_buffer))
-            except StopIteration:
-                buffer = self._service.next_buffer()
-                if len(buffer) == 0:
-                    raise StopIteration
-
-                self.__iterable_buffer = iter(buffer)
-                record = torch.FloatTensor(next(self.__iterable_buffer))
-
-            self._past_data.append(record)
-            inferiority_count = list(
-                map(lambda x: x[self._inferiorityColumnIndex], self._past_data)).count(1)
-            if inferiority_count == 0:
-                break
-            else:
-                self._past_data.pop(0)
-
-        data = []
-        for index in range(self._train_hour):
-            data.append(self._transform(self._past_data[index][2:]))
-        data = torch.cat(data, dim=0)
-        ans = self._past_data[-1][-2:-1]
-        self._past_data.pop(0)
-
-        return data, ans
+            exit()
+        for count, [data, label] in enumerate(self):
+            continue
+        self.len = count
+        self.mean = sum_val / count
+        self.std = hoge
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._service.db.close()
+        self._active_session.close()
 
-    def __costom_transform(self) -> transforms.Lambda:
-        train_service = Dataset_service("train")
-        truedata: torch.Tensor = train_service.truedata(
-            self._forecast_hour)[:, 2:]
-        data_mean = truedata.mean(axis=0)
-        data_std = truedata.std(axis=0)
-        print(f"data\n\tmean:{data_mean}\n\tstd:{data_std}\n")
-        return transforms.Lambda(lambda x: (x - data_mean) / data_std)
+    def __len__(self):
+        return self.len
+
+    def __iter__(self):
+        list_buffer = self._sqlresult.fetchmany(1000)
+        if not list_buffer:
+            raise StopIteration
+        self._iter_buffer = list_buffer
+        self._rows = self.__fill_rows()
+        return self
+
+    def __fill_rows(self) -> list:
+        rows = []
+        for count in range(self.forecast_hour + self.train_hour - 1):
+            record = next(self._iter_buffer)
+            rows.append(record)
+        return rows
+
+    def __next__(self):
+        is_inferiority = False
+        while not is_inferiority:
+            row = self.__buffer_next()
+            self._rows.append(row)
+            is_inferiority = self.__inferiority_detector(self._rows)
+            if is_inferiority:
+                self._rows.pop(0)
+        data = self.__traindata_molding(self._rows)
+        label = self.__label_molding(self._rows)
+        return torch.Tensor(data), torch.Tensor(label)
+
+    def __buffer_next(self):
+        try:
+            row = next(self._iter_buffer)
+        except StopIteration:
+            self.__iter__()
+            row = next(self._iter_buffer)
+        return row
+
+    def __inferiority_detector(self, rows):
+        for row in rows:
+            is_inferiority = \
+                False == row.kobe.inferiority == row.kix.inferiority == \
+                row.tomogashima.inferiority == row.nowphas.inferiority
+            if is_inferiority:
+                return True
+        return False
+
+    def __traindata_molding(self, rows) -> list:
+        data = []
+        for row in rows[:self.train_hour]:
+            sin_datetime = math.sin(row.kobe.datetime)
+            cos_datetime = math.cos(row.kobe.dateitme)
+            data.extend([
+                sin_datetime,
+                cos_datetime,
+                row.kobe.latitude_velocity,
+                row.kobe.longitude_velocity,
+                row.kobe.temperature_velocity,
+                row.kix.latitude_velocity,
+                row.kix.longitude_velocity,
+                row.kix.temperature_velocity,
+                row.tomogashima.latitude_velocity,
+                row.tomogashima.longitude_velocity,
+                row.tomogashima.temperature_velocity,
+                row.nowphas.significant_height,
+                row.nowphas.significant_period,
+                row.nowphas.direction
+            ])
+        return data
+
+    def __label_molding(self, rows) -> list:
+        data = []
+        forecast_index = self.train_hour + self.forecast_hour - 1
+        for row in rows[forecast_index: forecast_index + 1]:
+            data.extend([
+                row.nowphas.significant_height,
+            ])
+        return data
+
+    def close(self):
+        self._active_session.close()
 
 
-class Eval_NNWFDataset(Train_NNWFDataset):
-    def __init__(
-            self, service: Dataset_service):
-        super(Eval_NNWFDataset, self).__init__(service)
+class Train_NNWFDataset(DatasetBaseModel):
+    def __init__(self, forecast_hour: int, train_hour: int):
+        super().__init__(forecast_hour, train_hour)
+
+
+class Eval_NNWFDataset(DatasetBaseModel):
+    def __init__(self, forecast_hour: int, train_hour: int):
+        super().__init__(forecast_hour, train_hour)
 
     def get_real_values(self) -> torch.Tensor:
         return torch.stack([val for data, val in self], dim=0)

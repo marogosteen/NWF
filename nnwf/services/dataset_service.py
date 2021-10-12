@@ -13,7 +13,7 @@ class Dataset_service():
         self.db = sqlite3.connect(database="database/dataset.db")
         self.__curosr = self.db.cursor()
         self.__query = open(
-            f"services/query/get_{purpose}_dataset.sql").read()
+            f"nnwf/services/query/get_{purpose}_dataset.sql").read()
 
     def select_record(self) -> None:
         self.__curosr.execute(self.__query)

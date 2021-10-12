@@ -5,13 +5,14 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from services import Dataset_service
-from nets import NNWF_Net
-from datasets import Train_NNWFDataset, Eval_NNWFDataset
+from nnwf.services import Dataset_service
+from nnwf.nets import NNWF_Net
+from nnwf.datasets import Train_NNWFDataset, Eval_NNWFDataset
 
 
 print("\nrunning...\n")
 
+# TODO SQLAlchemy 使いたい
 # TODO 波高のみの予測にしたので、ServiceのSQL書き換えが必要？？
 # TODO transformsのクラスをMainでインスタンス
 # TODO Unit test 実装したい
@@ -106,6 +107,7 @@ def main():
                 print(f"\nOperate early stop epoch: {epoch}\n")
 
     loss_hist_model.draw_loss(model_name)
+    # TODO エラーハンドリングするべき
     torch.save(net.state_dict(), f"nets/state_dicts/{model_name}.pt")
 
 
