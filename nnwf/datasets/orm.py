@@ -80,10 +80,31 @@ def is_inferiority(self):
 
 
 print("\nrun\n")
+kobe = orm.aliased(AmedasTb, name="kobe")
+kix = orm.aliased(AmedasTb, name="kix")
+tomogashima = orm.aliased(AmedasTb, name="tomogashima")
 
 Session = orm.sessionmaker(engine)
 with Session() as session:
-    sqlresult = get_sqlresult(session)
+    # sqlresult = get_sqlresult(session)
+    print(type(session))
+    print(dir(session))
+    sqlresult = session.execute(
+        select(
+            kobe, kix, tomogashima,
+            Bundle(
+                "nowphas", NowphasTb.inferiority, NowphasTb.direction,
+                NowphasTb.significant_height, NowphasTb.significant_period))
+        .join(kix, kobe.datetime == kix.datetime)
+        .join(tomogashima, kobe.datetime == tomogashima.datetime)
+        .join(NowphasTb, kobe.datetime == NowphasTb.datetime)
+        .filter(
+            kobe.place == "kobe",
+            kix.place == "kix",
+            tomogashima.place == "tomogashima",
+            kobe.datetime >= datetime.datetime(2016, 1, 1),
+            kobe.datetime <= datetime.datetime(2019, 12, 31))
+        .order_by(kobe.datetime))
     print(type(sqlresult))
     rows = sqlresult.fetchmany(10)
     print(f"\nlen:{len(rows)}\n")

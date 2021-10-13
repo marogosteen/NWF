@@ -1,5 +1,6 @@
 import math
 
+import numpy as np
 from sqlalchemy import create_engine, orm
 import torch
 from torch.utils.data import IterableDataset
@@ -14,7 +15,6 @@ class DatasetBaseModel(IterableDataset):
         engine = create_engine("sqlite:///database/dataset.db", echo=True)
         SessionClass = orm.sessionmaker(engine)
         self._active_session: orm.session.Session = SessionClass()
-        self._sqlresult = nnwf_orm.get_sqlresult(self._active_session)
         self.forecast_hour = forecast_hour
         self.train_hour = train_hour
         self.len
@@ -22,13 +22,26 @@ class DatasetBaseModel(IterableDataset):
         self.std
 
     def __datainfo(self):
-        while True:
-            exit()
-        for count, [data, label] in enumerate(self):
-            continue
+        sqlresult = nnwf_orm.get_sqlresult(self._active_session)
+        # 自分でIterを考えるより、Self回す方が楽だろう。何より、moldingが面倒
+        mean_items = []
+        var_items = []
+        buffer = []
+        for count, [traindata, label] in enumerate(self):
+            buffer.append(traindata)
+            if count == 5000:
+                if len(buffer) == 1000:
+                    raise ValueError("Buffer size が1000ではない。")
+                npbuffer = np.array(torch.stack(buffer, dim=0))
+                npbuffermean = npbuffer.mean(axis=0)
+                npbuffervar = npbuffer.var(axis=0)
+                buffer.clear()
+
+        square_items.mean().sqrt()
         self.len = count
         self.mean = sum_val / count
         self.std = hoge
+        torch.Tensor().mean(dim=0)
 
     def __enter__(self):
         return self
@@ -40,16 +53,20 @@ class DatasetBaseModel(IterableDataset):
         return self.len
 
     def __iter__(self):
+        self._sqlresult = nnwf_orm.get_sqlresult(self._active_session)
+        self.__fetchmany()
+        self._rows = self.__fill_rows()
+        return self
+
+    def __fetchmany(self):
         list_buffer = self._sqlresult.fetchmany(1000)
         if not list_buffer:
             raise StopIteration
         self._iter_buffer = list_buffer
-        self._rows = self.__fill_rows()
-        return self
 
     def __fill_rows(self) -> list:
         rows = []
-        for count in range(self.forecast_hour + self.train_hour - 1):
+        for _ in range(self.forecast_hour + self.train_hour - 1):
             record = next(self._iter_buffer)
             rows.append(record)
         return rows
@@ -70,7 +87,7 @@ class DatasetBaseModel(IterableDataset):
         try:
             row = next(self._iter_buffer)
         except StopIteration:
-            self.__iter__()
+            self.__fetchmany()
             row = next(self._iter_buffer)
         return row
 
