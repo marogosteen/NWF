@@ -1,29 +1,20 @@
 import datetime
 
-from sqlalchemy import create_engine
-from sqlalchemy import orm, select, Column, INTEGER, REAL, TEXT, types
-from sqlalchemy.orm import Bundle
+from sqlalchemy import orm, select, Column, INTEGER, REAL, TEXT
+from sqlalchemy.dialects.sqlite import DATETIME
 from sqlalchemy.ext.declarative import declarative_base
 
 
-engine = create_engine("sqlite:///database/dataset.db", echo=True)
+# engine = create_engine("sqlite:///database/dataset.db", echo=True)
 Base = declarative_base()
-
-
-class MyDateTime(types.TypeDecorator):
-    impl = types.INTEGER
-    strformat = "%Y%m%d%H%M"
-
-    def process_bind_param(self, value, dialect):
-        return int(datetime.datetime.strftime(value, self.strformat))
-
-    def process_result_value(self, value, dialect):
-        return datetime.datetime.strptime(str(value), self.strformat)
+Datatime = DATETIME(
+    storage_format="%(year)04d-%(month)02d-%(day)02d %(hour)02d:%(minute)02d",
+    regexp=r"(\d+)-(\d+)-(\d+) (\d+):(\d+)")
 
 
 class AmedasTb(Base):
     __tablename__ = "amedas"
-    datetime = Column(MyDateTime, primary_key=True)
+    datetime = Column(Datatime, primary_key=True)
     place = Column(TEXT, primary_key=True)
     inferiority = Column(INTEGER, primary_key=True)
     latitude_velocity = Column(REAL, primary_key=True)
@@ -33,7 +24,7 @@ class AmedasTb(Base):
 
 class NowphasTb(Base):
     __tablename__ = "nowphas"
-    datetime = Column(MyDateTime, primary_key=True)
+    datetime = Column(Datatime, primary_key=True)
     place = Column(TEXT, primary_key=True)
     inferiority = Column(INTEGER, primary_key=True)
     mean_height = Column(REAL, primary_key=True)
@@ -47,54 +38,34 @@ class NowphasTb(Base):
     direction = Column(INTEGER, primary_key=True)
 
 
-def get_sqlresult(session: orm.session.Session):
-    kobe = orm.aliased(AmedasTb, name="kobe")
-    kix = orm.aliased(AmedasTb, name="kix")
-    tomogashima = orm.aliased(AmedasTb, name="tomogashima")
-
-    sqlresult = session.execute(
-        select(
-            kobe, kix, tomogashima,
-            Bundle(
-                "nowphas", NowphasTb.inferiority, NowphasTb.direction,
-                NowphasTb.significant_height, NowphasTb.significant_period))
-        .join(kix, kobe.datetime == kix.datetime)
-        .join(tomogashima, kobe.datetime == tomogashima.datetime)
-        .join(NowphasTb, kobe.datetime == NowphasTb.datetime)
-        .filter(
-            kobe.place == "kobe",
-            kix.place == "kix",
-            tomogashima.place == "tomogashima",
-            kobe.datetime >= datetime.datetime(2016, 1, 1),
-            kobe.datetime <= datetime.datetime(2019, 12, 31))
-        .order_by(kobe.datetime))
-
-    return sqlresult
-
-
-def is_inferiority(self):
-    inferiority = True in [
-        row.kobe.inferiority, row.kix.inferiority,
-        row.tomogashima.inferiority, row.nowphas.inferiority]
-    return inferiority
-
-
-print("\nrun\n")
 kobe = orm.aliased(AmedasTb, name="kobe")
 kix = orm.aliased(AmedasTb, name="kix")
 tomogashima = orm.aliased(AmedasTb, name="tomogashima")
 
-Session = orm.sessionmaker(engine)
-with Session() as session:
-    # sqlresult = get_sqlresult(session)
-    print(type(session))
-    print(dir(session))
+
+def get_sqlresult(session: orm.session.Session, begin_year: int, end_year: int):
     sqlresult = session.execute(
         select(
-            kobe, kix, tomogashima,
-            Bundle(
-                "nowphas", NowphasTb.inferiority, NowphasTb.direction,
-                NowphasTb.significant_height, NowphasTb.significant_period))
+            (kobe.inferiority).label("kobe_inferiority"),
+            (kix.inferiority).label("kix_inferiority"),
+            (tomogashima.inferiority).label("tomogashima_inferiority"),
+            (NowphasTb.inferiority).label("nowphas_inferiority"),
+            (kobe.datetime).label("datetime"),
+            (kobe.latitude_velocity).label("kobe_latitude_velocity"),
+            (kobe.longitude_velocity).label("kobe_longitude_velocity"),
+            (kobe.temperature).label("kobe_temperature"),
+            (kix.latitude_velocity).label("kix_latitude_velocity"),
+            (kix.longitude_velocity).label("kix_longitude_velocity"),
+            (kix.temperature).label("kix_temperature"),
+            (tomogashima.latitude_velocity).label(
+                "tomogashima_latitude_velocity"),
+            (tomogashima.longitude_velocity).label(
+                "tomogashima_longitude_velocity"),
+            (tomogashima.temperature).label("tomogashima_temperature"),
+            (NowphasTb.significant_height).label("height"),
+            (NowphasTb.significant_period).label("period"),
+            (NowphasTb.direction).label("direction")
+        )
         .join(kix, kobe.datetime == kix.datetime)
         .join(tomogashima, kobe.datetime == tomogashima.datetime)
         .join(NowphasTb, kobe.datetime == NowphasTb.datetime)
@@ -102,42 +73,8 @@ with Session() as session:
             kobe.place == "kobe",
             kix.place == "kix",
             tomogashima.place == "tomogashima",
-            kobe.datetime >= datetime.datetime(2016, 1, 1),
-            kobe.datetime <= datetime.datetime(2019, 12, 31))
+            kobe.datetime >= datetime.datetime(begin_year, 1, 1),
+            kobe.datetime <= datetime.datetime(end_year, 12, 31))
         .order_by(kobe.datetime))
-    print(type(sqlresult))
-    rows = sqlresult.fetchmany(10)
-    print(f"\nlen:{len(rows)}\n")
-    for row in rows:
-        print("keys", row.keys())
-        print("nowphas", row.nowphas.keys())
-        print(type(row.kobe.datetime), row.kobe.datetime, row.kobe.place)
-        exit()
 
-# Session = orm.sessionmaker(engine)
-# with Session() as session:
-#     session: SessionClass
-#     kobe = orm.aliased(AmedasTb, name="kobe")
-#     kix = orm.aliased(AmedasTb, name="kix")
-#     tomogashima = orm.aliased(AmedasTb, name="tomogashima")
-
-#     sqlresult = session.execute(
-#         select(kobe, kix)
-#         .join(kix, kobe.datetime == kix.datetime)
-#         .join(tomogashima, kobe.datetime == tomogashima.datetime)
-#         .join(NowphasTb, kobe.datetime == NowphasTb.datetime)
-#         .filter(
-#             kobe.place == "kobe",
-#             kix.place == "kix",
-#             tomogashima.place == "tomogashima",
-#             kobe.datetime >= datetime.datetime(2019, 1, 1))
-#         .order_by(kobe.datetime))
-
-#     rows = sqlresult.fetchmany(10)
-#     print(f"\nlen:{len(rows)}\n")
-#     for row in rows:
-#         print(type(row.kobe.datetime), row.kobe.datetime, row.kobe.place)
-#         exit()
-
-
-print("Done!")
+    return sqlresult

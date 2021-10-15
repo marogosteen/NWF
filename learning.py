@@ -5,7 +5,6 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from nnwf.services import Dataset_service
 from nnwf.nets import NNWF_Net
 from nnwf.datasets import Train_NNWFDataset, Eval_NNWFDataset
 
@@ -19,6 +18,8 @@ print("\nrunning...\n")
 # TODO 気圧と時刻の学習
 # TODO early stop 実装したい
 # TODO async await 実装するべき
+# TODO Datasetのbegin_year,end_yearのエラーハンドリングするべき
+# TODO 予測値と観測値をFile WriteしてMatplotでShow()
 
 
 def main():
@@ -29,21 +30,18 @@ def main():
     model_name = "nnwf01"
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    train_service = Dataset_service("train")
-    eval_service = Dataset_service("eval")
-
     net = NNWF_Net().to(device)
     optimizer = optim.Adam(net.parameters(), lr=learning_rate)
     loss_func = nn.MSELoss()
     loss_hist_model = Loss_hist_model()
 
     # TODO メゾットとかで、簡素化したい。
-    with Train_NNWFDataset(train_service) as train_dataset, \
-            Eval_NNWFDataset(eval_service) as eval_dataset:
-
+    with Train_NNWFDataset(forecast_hour=1, train_hour=2, begin_year=2016, end_year=2018) as train_dataset, \
+            Eval_NNWFDataset(forecast_hour=1, train_hour=2, begin_year=2019, end_year=2019) as eval_dataset:
         print(f"train length:{len(train_dataset)}\n",
               f"eval: length:{len(eval_dataset)}\n")
-
+        
+        transform = transforms.Lambda(lambda x: (x - train_dataset.mean)/train_dataset.std)
         real_values = eval_dataset.get_real_values()
         train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
         eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size)
@@ -58,6 +56,7 @@ def main():
             count_batches = len(train_dataloader)
             train_loss = 0
             for data, real_val in train_dataloader:
+                data = transform(data)
                 pred = train_net(data)
                 train_loss = loss_func(pred, real_val)
 
@@ -78,6 +77,7 @@ def main():
             pred_hist = []
             with torch.no_grad():
                 for data, real_val in eval_dataloader:
+                    data = transform(data)
                     pred = eval_net(data)
                     eval_loss += loss_func(pred, real_val).item()
                     extract_height_loss = compute_extract_loss(
@@ -108,7 +108,7 @@ def main():
 
     loss_hist_model.draw_loss(model_name)
     # TODO エラーハンドリングするべき
-    torch.save(net.state_dict(), f"nets/state_dicts/{model_name}.pt")
+    torch.save(net.state_dict(), f"nnwf/nets/state_dicts/{model_name}.pt")
 
 
 def compute_extract_loss(pred, real):
