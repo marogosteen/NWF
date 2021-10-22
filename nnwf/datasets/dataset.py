@@ -105,6 +105,7 @@ class DatasetBaseModel(IterableDataset):
                 row.tomogashima_latitude_velocity,
                 row.tomogashima_longitude_velocity,
                 row.tomogashima_temperature,
+                row.air_pressure,
                 row.height,
                 row.period
             ])

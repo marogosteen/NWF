@@ -38,6 +38,14 @@ class NowphasTb(Base):
     direction = Column(INTEGER, primary_key=True)
 
 
+class AirPressureTb(Base):
+    __tablename__ = "air_pressure"
+    datetime = Column(Datatime, primary_key=True)
+    place = Column(TEXT, primary_key=True)
+    inferiority = Column(INTEGER, primary_key=True)
+    air_pressure = Column(REAL, primary_key=True)
+
+
 kobe = orm.aliased(AmedasTb, name="kobe")
 kix = orm.aliased(AmedasTb, name="kix")
 tomogashima = orm.aliased(AmedasTb, name="tomogashima")
@@ -62,12 +70,13 @@ def get_sqlresult(session: orm.session.Session, begin_year: int, end_year: int):
             (tomogashima.longitude_velocity).label(
                 "tomogashima_longitude_velocity"),
             (tomogashima.temperature).label("tomogashima_temperature"),
+            (AirPressureTb.air_pressure).label("air_pressure"),
             (NowphasTb.significant_height).label("height"),
-            (NowphasTb.significant_period).label("period"),
-            (NowphasTb.direction).label("direction")
+            (NowphasTb.significant_period).label("period")
         )
         .join(kix, kobe.datetime == kix.datetime)
         .join(tomogashima, kobe.datetime == tomogashima.datetime)
+        .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)
         .join(NowphasTb, kobe.datetime == NowphasTb.datetime)
         .filter(
             kobe.place == "kobe",

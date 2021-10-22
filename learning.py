@@ -25,11 +25,11 @@ def main():
     print("\nlearning...\n")
 
     # TODO 学習のクラス化
-    epochs = 100
+    epochs = 150
     batch_size = 128
     learning_rate = 0.001
     model_name = "nnwf"
-    early_stop_endure = 10
+    early_stop_endure = 20
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     net = NNWF_Net().to(device)
