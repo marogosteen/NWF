@@ -27,7 +27,7 @@ class LearningLog():
         write_list = [
             f"best epoch {self.best_epoch()}\n",
             "best loss {:.6f}\n".format(self.best_loss()),
-            "best epoch {:.3f}\n".format(math.sqrt(self.best_loss()))]
+            "best standard deviation {:.3f}\n".format(math.sqrt(self.best_loss()))]
         with open(f"result/{model_name}_result.txt", mode="w") as f:
             for line in write_list:
                 f.write(line)
