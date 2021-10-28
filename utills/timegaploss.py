@@ -1,10 +1,10 @@
 import numpy as np
 
+import utills
 
-load_dir = "result/air_pressure/"
 
-with open(load_dir+"observed.csv") as f:
-    real_values = np.array(list(map(lambda x: float(x), f.read().splitlines())))
+casedir = utills.get_showcase_dir()
+real_values = np.array(utills.read_observed(casedir))
 
 data1 = real_values[:-1]
 data2 = real_values[1:]
