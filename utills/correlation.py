@@ -2,7 +2,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy.lib.type_check import real
 
 
 load_dir = "result/air_pressure/"
