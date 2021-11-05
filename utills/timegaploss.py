@@ -4,7 +4,7 @@ import utills
 
 
 casedir = utills.get_showcase_dir()
-real_values = np.array(utills.read_observed(casedir))
+real_values = np.array(utills.read_observed(casedir), dtype=np.float64)
 
 data1 = real_values[:-1]
 data2 = real_values[1:]

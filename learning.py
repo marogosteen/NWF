@@ -30,6 +30,7 @@ def main():
     learning_rate = 0.001
     model_name = "nnwf"
     early_stop_endure = 20
+    targetyear = 2016
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     net = NNWF_Net().to(device)
@@ -38,8 +39,8 @@ def main():
     log_model = LearningLog()
 
     # TODO メゾットとかで、簡素化したい。
-    with Train_NNWFDataset(forecast_hour=1, train_hour=2, begin_year=2016, end_year=2018) as train_dataset, \
-            Eval_NNWFDataset(forecast_hour=1, train_hour=2, begin_year=2019, end_year=2019) as eval_dataset:
+    with Train_NNWFDataset(forecast_hour=1, train_hour=2, targetyear=targetyear) as train_dataset, \
+            Eval_NNWFDataset(forecast_hour=1, train_hour=2, targetyear=targetyear) as eval_dataset:
         print(f"train length:{len(train_dataset)}\n",
               f"eval: length:{len(eval_dataset)}\n")
 
