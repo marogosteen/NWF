@@ -1,3 +1,4 @@
+import os
 import tqdm
 import torch
 from torch import nn
@@ -28,9 +29,13 @@ def main():
     epochs = 150
     batch_size = 128
     learning_rate = 0.001
-    model_name = "nnwf"
+    model_name = "casename"
     early_stop_endure = 20
-    targetyear = 2016
+    targetyear = 2019
+
+    savedir = f"result/{model_name}/"
+    if not os.path.exists(savedir):
+        os.mkdir(savedir)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     net = NNWF_Net().to(device)
@@ -101,15 +106,15 @@ def main():
                 batch_pred = net(data)
                 best_pred_list.extend(batch_pred.tolist())
 
-        with open("result/observed.csv", mode="w") as f:
+        with open(f"result/{model_name}/observed.csv", mode="w") as f:
             for line in real_values.tolist():
                 f.write(str(line[0]) + "\n")
 
-        with open("result/predicted.csv", mode="w") as f:
+        with open(f"result/{model_name}/predicted.csv", mode="w") as f:
             for line in best_pred_list:
                 f.write(str(line[0]) + "\n")
 
-    model_state_path = f"nnwf/nets/state_dicts/{model_name}.pt"
+    model_state_path = f"result/{model_name}/state_dict.pt"
     log_model.save_best_model_state(model_state_path)
     log_model.save_log(model_name)
     log_model.draw_loss(model_name)
