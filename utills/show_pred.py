@@ -1,17 +1,14 @@
 import matplotlib.pyplot as plt
 
+import utills
 
-load_dir = "result/air_pressure/"
-
-with open(load_dir+"observed.csv") as f:
-    real_values = list(map(lambda x: float(x), f.read().splitlines()))
-
-with open(load_dir+"predicted.csv") as f:
-    pred = list(map(lambda x: float(x), f.read().splitlines()))
+casedir = utills.get_showcase_dir()
+real_values = utills.read_observed(casedir)
+pred = utills.read_predicted(casedir)
 
 fig = plt.figure()
 height_ax = fig.add_subplot(
-    111, title=load_dir, ylabel="wave height")
+    111, title=casedir, ylabel="wave height")
 height_ax.plot(range(len(real_values)), real_values, label="observed value")
 height_ax.plot(
     range(len(pred)), pred,

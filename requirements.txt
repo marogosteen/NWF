@@ -15,4 +15,5 @@ toml==0.10.2
 torch==1.8.1
 torchaudio==0.8.1
 torchvision==0.9.1
+tqdm==4.62.3
 typing-extensions==3.10.0.0

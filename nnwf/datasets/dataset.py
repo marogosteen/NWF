@@ -10,16 +10,16 @@ from nnwf.datasets import orm as nnwf_orm
 
 class DatasetBaseModel(IterableDataset):
     def __init__(
-            self, forecast_hour: int, train_hour: int,
-            begin_year: int, end_year: int):
+            self, forecast_hour: int, train_hour: int, ormquery):
+
         super(DatasetBaseModel).__init__()
         engine = create_engine("sqlite:///database/dataset.db", echo=False)
         SessionClass = orm.sessionmaker(engine)
+
         self._active_session: orm.session.Session = SessionClass()
+        self._query = ormquery
         self.forecast_hour = forecast_hour
         self.train_hour = train_hour
-        self._begin_year = begin_year
-        self._end_year = end_year
         self.len = self.__get_len()
 
     def __get_len(self):
@@ -37,8 +37,9 @@ class DatasetBaseModel(IterableDataset):
         return self.len
 
     def __iter__(self):
-        self._sqlresult = nnwf_orm.get_sqlresult(
-            self._active_session, self._begin_year, self._end_year)
+        # self._sqlresult = nnwf_orm.get_sqlresult(
+        #     self._active_session, self._begin_year, self._end_year)
+        self._sqlresult = self._active_session.execute(self._query)
         self.__fetchmany()
         self._rows = self.__fill_rows()
         return self
@@ -126,9 +127,10 @@ class DatasetBaseModel(IterableDataset):
 
 class Train_NNWFDataset(DatasetBaseModel):
     def __init__(
-            self, forecast_hour: int, train_hour: int,
-            begin_year: int, end_year: int):
-        super().__init__(forecast_hour, train_hour, begin_year, end_year)
+            self, forecast_hour: int, train_hour: int, targetyear: int):
+        ormquery = nnwf_orm.get_train_sqlresult(targetyear)
+        super().__init__(
+            forecast_hour, train_hour, ormquery)
         self.mean = self.__get_mean(self.len)
         self.std = self.__get_std(self.len, self.mean)
 
@@ -155,9 +157,10 @@ class Train_NNWFDataset(DatasetBaseModel):
 
 class Eval_NNWFDataset(DatasetBaseModel):
     def __init__(
-            self, forecast_hour: int, train_hour: int,
-            begin_year: int, end_year: int):
-        super().__init__(forecast_hour, train_hour, begin_year, end_year)
+            self, forecast_hour: int, train_hour: int, targetyear: int):
+        ormquery = nnwf_orm.get_eval_sqlresult(targetyear)
+        super().__init__(
+            forecast_hour, train_hour, ormquery)
 
     def get_real_values(self) -> torch.Tensor:
         return torch.stack([val for _, val in self], dim=0)

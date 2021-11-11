@@ -28,7 +28,7 @@ class LearningLog():
             f"best epoch {self.best_epoch()}\n",
             "best loss {:.6f}\n".format(self.best_loss()),
             "best standard deviation {:.3f}\n".format(math.sqrt(self.best_loss()))]
-        with open(f"result/{model_name}_result.txt", mode="w") as f:
+        with open(f"result/{model_name}/result_summary.txt", mode="w") as f:
             for line in write_list:
                 f.write(line)
 
@@ -39,7 +39,7 @@ class LearningLog():
             111, title=f"loss  best epoch {best_epoch}",
             ylabel="MSE loss", xlabel="epochs")
         self.__plot_loss(ax, self.train_loss_hist, self.eval_loss_list)
-        plt.savefig(f"result/{model_name}_loss.jpg")
+        plt.savefig(f"result/{model_name}/loss.jpg")
 
     def __plot_loss(self, ax, train_loss, eval_loss):
         ax.plot(range(1, len(train_loss)+1), train_loss, label="train")
