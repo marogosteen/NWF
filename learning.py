@@ -29,12 +29,12 @@ def main():
     section = "learning"
 
     # TODO 学習のクラス化
-    epochs = config.get(section, "epochs")
-    batch_size = config.get(section, "batchsize")
-    learning_rate = config.get(section, "learningrate")
+    epochs = int(config.get(section, "epochs"))
+    batch_size = int(config.get(section, "batchsize"))
+    learning_rate = float(config.get(section, "learningrate"))
     model_name = config.get(section, "casename")
-    early_stop_endure = config.get(section, "earlystop_endure")
-    targetyear = config.get(section, "targetyear")
+    early_stop_endure = int(config.get(section, "earlystop_endure"))
+    targetyear = int(config.get(section, "targetyear"))
 
     savedir = f"result/{model_name}/"
     if not os.path.exists(savedir):
