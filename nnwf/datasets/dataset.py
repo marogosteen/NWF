@@ -37,8 +37,6 @@ class DatasetBaseModel(IterableDataset):
         return self.len
 
     def __iter__(self):
-        # self._sqlresult = nnwf_orm.get_sqlresult(
-        #     self._active_session, self._begin_year, self._end_year)
         self._sqlresult = self._active_session.execute(self._query)
         self.__fetchmany()
         self._rows = self.__fill_rows()
@@ -92,14 +90,19 @@ class DatasetBaseModel(IterableDataset):
         data = []
         for row in rows[:train_hour]:
             normalize_month = row.datetime.month / 12
+            normalize_hour = row.datetime.hour / 24
             sin_month = math.sin(normalize_month)
             cos_month = math.cos(normalize_month)
+            sin_hour = math.sin(normalize_hour)
+            cos_hour = math.cos(normalize_hour)
 
             windWaveThreshold = False if row.period > row.height * 4 + 2 else True
 
             data.extend([
                 sin_month,
                 cos_month,
+                sin_hour,
+                cos_hour,
                 windWaveThreshold,
                 row.kobe_latitude_velocity,
                 row.kobe_longitude_velocity,
