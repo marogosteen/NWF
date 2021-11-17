@@ -94,9 +94,13 @@ class DatasetBaseModel(IterableDataset):
             normalize_month = row.datetime.month / 12
             sin_month = math.sin(normalize_month)
             cos_month = math.cos(normalize_month)
+
+            windWaveThreshold = False if row.period > row.height * 4 + 2 else True
+
             data.extend([
                 sin_month,
                 cos_month,
+                windWaveThreshold,
                 row.kobe_latitude_velocity,
                 row.kobe_longitude_velocity,
                 row.kobe_temperature,
