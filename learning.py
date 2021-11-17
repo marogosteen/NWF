@@ -1,4 +1,5 @@
 import os
+import configparser
 import tqdm
 import torch
 from torch import nn
@@ -21,17 +22,19 @@ def early_stop_detect(log_model: LearningLog, endure: int):
 # TODO async await 実装するべき??
 # TODO Datasetのbegin_year,end_yearのエラーハンドリングするべき
 
-
 def main():
     print("\nlearning...\n")
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+    section = "learning"
 
     # TODO 学習のクラス化
-    epochs = 150
-    batch_size = 128
-    learning_rate = 0.001
-    model_name = "casename"
-    early_stop_endure = 20
-    targetyear = 2019
+    epochs = int(config.get(section, "epochs"))
+    batch_size = int(config.get(section, "batchsize"))
+    learning_rate = float(config.get(section, "learningrate"))
+    model_name = config.get(section, "casename")
+    early_stop_endure = int(config.get(section, "earlystop_endure"))
+    targetyear = int(config.get(section, "targetyear"))
 
     savedir = f"result/{model_name}/"
     if not os.path.exists(savedir):
