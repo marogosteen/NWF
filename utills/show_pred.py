@@ -22,7 +22,7 @@ print(
     f"\tcount : {alldata_count}",
     f"\tmse: {mse}", f"\tstd: {std}",
     f"\t(1 hour gap) mse: {timeGapMSE}",
-    f"\t(1 hour gap)std: {np.sqrt(timeGapMSE)}",
+    f"\t(1 hour gap) std: {np.sqrt(timeGapMSE)}",
     sep="\n", end="\n\n")
 
 height_threshold = 0.5

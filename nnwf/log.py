@@ -5,10 +5,23 @@ import matplotlib.pyplot as plt
 import torch
 
 
-class LearningLog():
-    train_loss_hist = []
-    eval_loss_list = []
-    best_model_state = None
+class LogModel():
+    def __init__(self) -> None:
+        self.train_loss_hist = []
+        self.eval_loss_list = []
+        self.bestEpoch = 0
+        self.bestModelState = None
+
+    def showResult(self):
+        print("",
+              "best epoch: ", f"\t{self.best_epoch()}",
+              "best epoch: ", f"\t{self.bestEpoch}",
+              "best loss : ", f"\t{round(self.best_loss(), 5)}",
+              sep="\n")
+
+    def isBestLoss(self, currentLoss) -> bool:
+        isBestLoss = self.best_loss() >= currentLoss or not self.bestModelState
+        return isBestLoss
 
     def best_loss(self):
         return min(self.eval_loss_list)
@@ -18,10 +31,7 @@ class LearningLog():
         return self.eval_loss_list.index(best_loss) + 1
 
     def save_best_model_state(self, save_path):
-        save_dir = os.path.dirname(save_path)
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        torch.save(self.best_model_state, save_path)
+        torch.save(self.bestModelState, save_path)
 
     def save_log(self, model_name):
         write_list = [

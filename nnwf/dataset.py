@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, orm
 import torch
 from torch.utils.data import IterableDataset
 
-from nnwf.datasets import orm as nnwf_orm
+from nnwf import orm as nnwf_orm
 
 
 class DatasetBaseModel(IterableDataset):
@@ -96,14 +96,14 @@ class DatasetBaseModel(IterableDataset):
             sin_hour = math.sin(normalize_hour)
             cos_hour = math.cos(normalize_hour)
 
-            windWaveThreshold = False if row.period > row.height * 4 + 2 else True
+            isWindWave = False if row.period > row.height * 4 + 2 else True
 
             data.extend([
                 sin_month,
                 cos_month,
                 sin_hour,
                 cos_hour,
-                windWaveThreshold,
+                isWindWave,
                 row.kobe_latitude_velocity,
                 row.kobe_longitude_velocity,
                 row.kobe_temperature,
@@ -132,7 +132,7 @@ class DatasetBaseModel(IterableDataset):
         self._active_session.close()
 
 
-class Train_NNWFDataset(DatasetBaseModel):
+class TrainDatasetModel(DatasetBaseModel):
     def __init__(
             self, forecast_hour: int, train_hour: int, targetyear: int):
         ormquery = nnwf_orm.get_train_sqlresult(targetyear)
@@ -162,7 +162,7 @@ class Train_NNWFDataset(DatasetBaseModel):
         return torch.FloatTensor(std)
 
 
-class Eval_NNWFDataset(DatasetBaseModel):
+class EvalDatasetModel(DatasetBaseModel):
     def __init__(
             self, forecast_hour: int, train_hour: int, targetyear: int):
         ormquery = nnwf_orm.get_eval_sqlresult(targetyear)
