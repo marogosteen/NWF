@@ -1,12 +1,11 @@
 import os
 import glob
-from posixpath import basename
 
 
 def get_showcase_dir():
     print("please select showcase in the following")
     cases = sorted(
-        list(map(lambda x: basename(x[:-1]), glob.glob("result/*/"))))
+        list(map(lambda x: os.path.basename(x[:-1]), glob.glob("result/*/"))))
     strcases = ""
     for index, case in enumerate(cases):
         strcases += f"\n\t{index}: " + case

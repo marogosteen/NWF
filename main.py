@@ -12,11 +12,6 @@ from nnwf.dataset import TrainDatasetModel, EvalDatasetModel
 from nnwf.log import LogModel
 
 
-def early_stop_detect(log_model: LogModel, endure: int):
-    current_epoch = len(log_model.train_loss_hist)
-    return endure < (current_epoch - log_model.best_epoch())
-
-
 """
 # TODO 
     config情報をLog & print
@@ -27,8 +22,6 @@ def early_stop_detect(log_model: LogModel, endure: int):
 
 config = Config()
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-net = NNWF_Net().to(device)
-initialState = net.state_dict()
 
 for year in [2016, 2017, 2018, 2019]:
     config.targetYear = year
@@ -40,7 +33,6 @@ for year in [2016, 2017, 2018, 2019]:
         os.mkdir(savedir)
 
     net = NNWF_Net().to(device)
-    net.load_state_dict(initialState)
     optimizer = optim.Adam(net.parameters(), lr=config.learningRate)
     lossFunc = nn.MSELoss()
     logModel = LogModel()
@@ -59,7 +51,6 @@ for year in [2016, 2017, 2018, 2019]:
         evalDataLoader = DataLoader(eval_dataset, batch_size=config.batchSize)
 
         learnigModel = LearningModel(
-            epochs=config.epochs,
             net=net,
             lossFunc=lossFunc,
             optimizer=optimizer,
@@ -69,7 +60,7 @@ for year in [2016, 2017, 2018, 2019]:
             earlyStopEndure=config.earlyStopEndure,
         )
 
-        logModel = learnigModel.fit(logModel)
+        logModel = learnigModel.fit(config.epochs, logModel)
         logModel.showResult()
         pred = learnigModel.getBestPredictedValue(logModel.bestModelState)
 
@@ -81,8 +72,8 @@ for year in [2016, 2017, 2018, 2019]:
             for line in pred:
                 f.write(str(line[0]) + "\n")
 
-    config.save(savedir)
     torch.save(logModel.bestModelState, savedir+"/state_dict.pt")
+    config.save(savedir)
     logModel.save_log(caseName)
     logModel.draw_loss(caseName)
 

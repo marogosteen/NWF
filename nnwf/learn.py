@@ -6,22 +6,20 @@ from nnwf.log import LogModel
 
 class LearningModel():
     def __init__(
-        self, epochs, net, lossFunc, optimizer,
+        self, net, lossFunc, optimizer,
         trainDataLoader, evalDataLoader, transform,
-        earlyStopEndure, #logModel
+        earlyStopEndure
     ) -> None:
         self.net = net
-        self.epochs = epochs
         self.lossFunc = lossFunc
         self.optimizer = optimizer
         self.trainDataLoader = trainDataLoader
         self.evalDataLoader = evalDataLoader
         self.transform = transform
         self.earlyStopEndure = earlyStopEndure
-        # self.logModel: LogModel = logModel
 
-    def fit(self, logModel: LogModel) -> LogModel:
-        for epoch in tqdm.tqdm((range(1, self.epochs+1))):
+    def fit(self, epochs:int, logModel: LogModel) -> LogModel:
+        for epoch in tqdm.tqdm((range(1, epochs+1))):
             trainLoss = self.__train(self.trainDataLoader, self.transform)
             evalLoss = self.__eval(self.evalDataLoader, self.transform)
             logModel.train_loss_hist.append(trainLoss)
@@ -29,7 +27,9 @@ class LearningModel():
 
             if logModel.isBestLoss(evalLoss):
                 logModel.bestEpoch = epoch
+                logModel.bestLoss = evalLoss
                 logModel.bestModelState = self.net.state_dict()
+                # logModel.showResult()
 
             if self.__earlyStopDetect(logModel, self.earlyStopEndure):
                 # TODO EarlyStop実装
@@ -51,7 +51,6 @@ class LearningModel():
     def __train(self, dataloader, transform):
         # train lossをbatch毎に求めて最適化する。
         train_net = self.net.train()
-        count_batches = len(dataloader)
         loss = 0
         for data, real_val in dataloader:
             data = transform(data)

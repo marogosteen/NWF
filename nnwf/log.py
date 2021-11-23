@@ -10,18 +10,19 @@ class LogModel():
         self.train_loss_hist = []
         self.eval_loss_list = []
         self.bestEpoch = 0
+        self.bestLoss = None
         self.bestModelState = None
 
     def showResult(self):
         print("",
               "best epoch: ", f"\t{self.best_epoch()}",
-              "best epoch: ", f"\t{self.bestEpoch}",
+              "best epoch (param): ", f"\t{self.bestEpoch}",
               "best loss : ", f"\t{round(self.best_loss(), 5)}",
+              "best loss (param): ", f"\t{round(self.bestLoss, 5)}",
               sep="\n")
 
     def isBestLoss(self, currentLoss) -> bool:
-        isBestLoss = self.best_loss() >= currentLoss or not self.bestModelState
-        return isBestLoss
+        return self.best_loss() >= currentLoss or not self.bestModelState
 
     def best_loss(self):
         return min(self.eval_loss_list)
