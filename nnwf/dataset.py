@@ -95,7 +95,6 @@ class DatasetBaseModel(IterableDataset):
             cos_month = math.cos(normalize_month)
             sin_hour = math.sin(normalize_hour)
             cos_hour = math.cos(normalize_hour)
-
             isWindWave = False if row.period > row.height * 4 + 2 else True
 
             data.extend([

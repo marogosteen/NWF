@@ -1,3 +1,5 @@
+import copy
+
 import tqdm
 import torch
 
@@ -19,7 +21,7 @@ class LearningModel():
         self.earlyStopEndure = earlyStopEndure
 
     def fit(self, epochs:int, logModel: LogModel) -> LogModel:
-        for epoch in tqdm.tqdm((range(1, epochs+1))):
+        for epoch in tqdm.tqdm(range(1, epochs+1)):
             trainLoss = self.__train(self.trainDataLoader, self.transform)
             evalLoss = self.__eval(self.evalDataLoader, self.transform)
             logModel.train_loss_hist.append(trainLoss)
@@ -28,8 +30,7 @@ class LearningModel():
             if logModel.isBestLoss(evalLoss):
                 logModel.bestEpoch = epoch
                 logModel.bestLoss = evalLoss
-                logModel.bestModelState = self.net.state_dict()
-                # logModel.showResult()
+                logModel.bestModelState = copy.deepcopy(self.net.state_dict())
 
             if self.__earlyStopDetect(logModel, self.earlyStopEndure):
                 # TODO EarlyStop実装
