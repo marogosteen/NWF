@@ -81,7 +81,7 @@ class DatasetBaseModel(IterableDataset):
     def __inferiority_detector(self, rows):
         for row in rows:
             inferiority = row.kobe_inferiority or row.kix_inferiority or\
-                row.tomogashima_inferiority or row.nowphas_inferiority
+                row.tomogashima_inferiority or row.wave_inferiority
             if inferiority:
                 return True
         return False
@@ -105,13 +105,11 @@ class DatasetBaseModel(IterableDataset):
                 isWindWave,
                 row.kobe_latitude_velocity,
                 row.kobe_longitude_velocity,
-                row.kobe_temperature,
+                row.temperature,
                 row.kix_latitude_velocity,
                 row.kix_longitude_velocity,
-                row.kix_temperature,
                 row.tomogashima_latitude_velocity,
                 row.tomogashima_longitude_velocity,
-                row.tomogashima_temperature,
                 row.air_pressure,
                 row.height,
                 row.period
