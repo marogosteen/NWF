@@ -32,9 +32,9 @@ class LearningModel():
                 logModel.bestLoss = evalLoss
                 logModel.bestModelState = copy.deepcopy(self.net.state_dict())
 
-            if self.__earlyStopDetect(logModel, self.earlyStopEndure):
-                # TODO EarlyStop実装
+            if self.__isEarlyStop(logModel, self.earlyStopEndure):
                 print("[ Early Stop ]\n")
+                return logModel
 
         return logModel
 
@@ -78,6 +78,6 @@ class LearningModel():
 
         return loss
 
-    def __earlyStopDetect(self, log_model: LogModel, endure: int):
+    def __isEarlyStop(self, log_model: LogModel, endure: int):
         current_epoch = len(log_model.train_loss_hist)
         return endure < (current_epoch - log_model.best_epoch())

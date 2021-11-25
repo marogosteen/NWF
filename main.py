@@ -14,9 +14,7 @@ from nnwf.log import LogModel
 
 """
 # TODO 
-    config情報をLog & print
     Unit test 実装したい
-    async await 実装するべき??
     Datasetのbegin_year,end_yearのエラーハンドリングするべき
 """
 

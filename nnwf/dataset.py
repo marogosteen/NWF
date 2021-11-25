@@ -16,8 +16,8 @@ class DatasetBaseModel(IterableDataset):
         engine = create_engine("sqlite:///database/dataset.db", echo=False)
         SessionClass = orm.sessionmaker(engine)
 
-        self._active_session: orm.session.Session = SessionClass()
-        self._query = ormquery
+        self.__active_session: orm.session.Session = SessionClass()
+        self.__query = ormquery
         self.forecast_hour = forecast_hour
         self.train_hour = train_hour
         self.len = self.__get_len()
@@ -31,51 +31,51 @@ class DatasetBaseModel(IterableDataset):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._active_session.close()
+        self.__active_session.close()
 
     def __len__(self):
         return self.len
 
     def __iter__(self):
-        self._sqlresult = self._active_session.execute(self._query)
+        self.__sqlresult = self.__active_session.execute(self.__query)
         self.__fetchmany()
-        self._rows = self.__fill_rows()
+        self.__rows = self.__fill_rows()
         return self
 
     def __fetchmany(self):
-        list_buffer = self._sqlresult.fetchmany(10000)
+        list_buffer = self.__sqlresult.fetchmany(10000)
         if not list_buffer:
             raise StopIteration
-        self._iter_buffer = iter(list_buffer)
+        self.__iter_buffer = iter(list_buffer)
 
     def __fill_rows(self) -> list:
         rows = []
         for _ in range(self.forecast_hour + self.train_hour - 1):
-            record = next(self._iter_buffer)
+            record = next(self.__iter_buffer)
             rows.append(record)
         return rows
 
     def __next__(self):
         while True:
             row = self.__buffer_next()
-            self._rows.append(row)
-            is_inferiority = self.__inferiority_detector(self._rows)
+            self.__rows.append(row)
+            is_inferiority = self.__inferiority_detector(self.__rows)
             if is_inferiority:
-                self._rows.pop(0)
+                self.__rows.pop(0)
             else:
                 break
-        data = self.__traindata_molding(self._rows, self.train_hour)
+        data = self.__traindata_molding(self.__rows, self.train_hour)
         label = self.__label_molding(
-            self._rows, self.train_hour, self.forecast_hour)
-        self._rows.pop(0)
+            self.__rows, self.train_hour, self.forecast_hour)
+        self.__rows.pop(0)
         return torch.Tensor(data), torch.Tensor(label)
 
     def __buffer_next(self):
         try:
-            row = next(self._iter_buffer)
+            row = next(self.__iter_buffer)
         except StopIteration:
             self.__fetchmany()
-            row = next(self._iter_buffer)
+            row = next(self.__iter_buffer)
         return row
 
     def __inferiority_detector(self, rows):
@@ -128,7 +128,7 @@ class DatasetBaseModel(IterableDataset):
         return data
 
     def close(self):
-        self._active_session.close()
+        self.__active_session.close()
 
 
 class TrainDatasetModel(DatasetBaseModel):
