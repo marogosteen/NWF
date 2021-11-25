@@ -13,8 +13,8 @@ Datatime = DATETIME(
     regexp=r"(\d+)-(\d+)-(\d+) (\d+):(\d+)")
 
 
-class AmedasTb(Base):
-    __tablename__ = "amedas"
+class WindTb(Base):
+    __tablename__ = "Wind"
     datetime = Column(Datatime, primary_key=True)
     place = Column(TEXT, primary_key=True)
     inferiority = Column(INTEGER, primary_key=True)
@@ -23,8 +23,8 @@ class AmedasTb(Base):
     temperature = Column(REAL, primary_key=True)
 
 
-class NowphasTb(Base):
-    __tablename__ = "nowphas"
+class WaveTb(Base):
+    __tablename__ = "Wave"
     datetime = Column(Datatime, primary_key=True)
     place = Column(TEXT, primary_key=True)
     inferiority = Column(INTEGER, primary_key=True)
@@ -40,16 +40,16 @@ class NowphasTb(Base):
 
 
 class AirPressureTb(Base):
-    __tablename__ = "air_pressure"
+    __tablename__ = "AirPressure"
     datetime = Column(Datatime, primary_key=True)
     place = Column(TEXT, primary_key=True)
     inferiority = Column(INTEGER, primary_key=True)
     air_pressure = Column(REAL, primary_key=True)
 
 
-kobe = orm.aliased(AmedasTb, name="kobe")
-kix = orm.aliased(AmedasTb, name="kix")
-tomogashima = orm.aliased(AmedasTb, name="tomogashima")
+kobe = orm.aliased(WindTb, name="kobe")
+kix = orm.aliased(WindTb, name="kix")
+tomogashima = orm.aliased(WindTb, name="tomogashima")
 
 
 def get_train_sqlresult(targetyear: int):
@@ -57,7 +57,7 @@ def get_train_sqlresult(targetyear: int):
         (kobe.inferiority).label("kobe_inferiority"),
         (kix.inferiority).label("kix_inferiority"),
         (tomogashima.inferiority).label("tomogashima_inferiority"),
-        (NowphasTb.inferiority).label("nowphas_inferiority"),
+        (WaveTb.inferiority).label("nowphas_inferiority"),
         (kobe.datetime).label("datetime"),
         (kobe.latitude_velocity).label("kobe_latitude_velocity"),
         (kobe.longitude_velocity).label("kobe_longitude_velocity"),
@@ -71,13 +71,13 @@ def get_train_sqlresult(targetyear: int):
             "tomogashima_longitude_velocity"),
         (tomogashima.temperature).label("tomogashima_temperature"),
         (AirPressureTb.air_pressure).label("air_pressure"),
-        (NowphasTb.significant_height).label("height"),
-        (NowphasTb.significant_period).label("period")
+        (WaveTb.significant_height).label("height"),
+        (WaveTb.significant_period).label("period")
     )\
     .join(kix, kobe.datetime == kix.datetime)\
     .join(tomogashima, kobe.datetime == tomogashima.datetime)\
     .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)\
-    .join(NowphasTb, kobe.datetime == NowphasTb.datetime)\
+    .join(WaveTb, kobe.datetime == WaveTb.datetime)\
     .filter(
         kobe.place == "kobe",
         kix.place == "kix",
@@ -95,7 +95,7 @@ def get_eval_sqlresult(targetyear: int):
         (kobe.inferiority).label("kobe_inferiority"),
         (kix.inferiority).label("kix_inferiority"),
         (tomogashima.inferiority).label("tomogashima_inferiority"),
-        (NowphasTb.inferiority).label("nowphas_inferiority"),
+        (WaveTb.inferiority).label("nowphas_inferiority"),
         (kobe.datetime).label("datetime"),
         (kobe.latitude_velocity).label("kobe_latitude_velocity"),
         (kobe.longitude_velocity).label("kobe_longitude_velocity"),
@@ -109,13 +109,13 @@ def get_eval_sqlresult(targetyear: int):
             "tomogashima_longitude_velocity"),
         (tomogashima.temperature).label("tomogashima_temperature"),
         (AirPressureTb.air_pressure).label("air_pressure"),
-        (NowphasTb.significant_height).label("height"),
-        (NowphasTb.significant_period).label("period")
+        (WaveTb.significant_height).label("height"),
+        (WaveTb.significant_period).label("period")
     )\
     .join(kix, kobe.datetime == kix.datetime)\
     .join(tomogashima, kobe.datetime == tomogashima.datetime)\
     .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)\
-    .join(NowphasTb, kobe.datetime == NowphasTb.datetime)\
+    .join(WaveTb, kobe.datetime == WaveTb.datetime)\
     .filter(
         kobe.place == "kobe",
         kix.place == "kix",
