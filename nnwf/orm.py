@@ -56,6 +56,10 @@ class TemperatureTb(Base):
 kobe = orm.aliased(WindTb, name="kobe")
 kix = orm.aliased(WindTb, name="kix")
 tomogashima = orm.aliased(WindTb, name="tomogashima")
+akashi = orm.aliased(WindTb, name="akashi")
+awaji = orm.aliased(WindTb, name="awaji")
+nishinomiya = orm.aliased(WindTb, name="nishinomiya")
+osaka = orm.aliased(WindTb, name="osaka")
 
 
 def get_train_sqlresult(targetyear: int):
@@ -63,17 +67,31 @@ def get_train_sqlresult(targetyear: int):
         (kobe.inferiority).label("kobe_inferiority"),
         (kix.inferiority).label("kix_inferiority"),
         (tomogashima.inferiority).label("tomogashima_inferiority"),
+        (akashi.inferiority).label("akashi_inferiority"),
+        (awaji.inferiority).label("awaji_inferiority"),
+        (nishinomiya.inferiority).label("nishinomiya_inferiority"),
+        (osaka.inferiority).label("osaka_inferiority"),
         (WaveTb.inferiority).label("wave_inferiority"),
         (kobe.datetime).label("datetime"),
         (kobe.latitude_velocity).label("kobe_latitude_velocity"),
         (kobe.longitude_velocity).label("kobe_longitude_velocity"),
-        (TemperatureTb.temperature).label("temperature"),
         (kix.latitude_velocity).label("kix_latitude_velocity"),
         (kix.longitude_velocity).label("kix_longitude_velocity"),
         (tomogashima.latitude_velocity).label(
             "tomogashima_latitude_velocity"),
         (tomogashima.longitude_velocity).label(
             "tomogashima_longitude_velocity"),
+        (akashi.latitude_velocity).label("akashi_latitude_velocity"),
+        (akashi.longitude_velocity).label("akashi_longitude_velocity"),
+        (awaji.latitude_velocity).label("awaji_latitude_velocity"),
+        (awaji.longitude_velocity).label("awaji_longitude_velocity"),
+        (nishinomiya.latitude_velocity).label(
+            "nishinomiya_latitude_velocity"),
+        (nishinomiya.longitude_velocity).label(
+            "nishinomiya_longitude_velocity"),
+        (osaka.latitude_velocity).label("osaka_latitude_velocity"),
+        (osaka.longitude_velocity).label("osaka_longitude_velocity"),
+        (TemperatureTb.temperature).label("temperature"),
         (AirPressureTb.air_pressure).label("air_pressure"),
         (WaveTb.significant_height).label("height"),
         (WaveTb.significant_period).label("period")
