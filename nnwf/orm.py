@@ -63,7 +63,40 @@ osaka = orm.aliased(WindTb, name="osaka")
 
 
 def get_train_sqlresult(targetyear: int):
-    query = select(
+    query = basequery().filter(
+        kobe.place == "kobe",
+        kix.place == "kix",
+        tomogashima.place == "tomogashima",
+        akashi.place == "akashi",
+        awaji.place == "awaji",
+        nishinomiya.place == "nishinomiya",
+        osaka.place == "osaka",
+        or_(
+            kobe.datetime < datetime.datetime(targetyear, 1, 1),
+            kobe.datetime > datetime.datetime(targetyear, 12, 31)))\
+        .order_by(kobe.datetime)
+
+    return query
+
+
+def get_eval_sqlresult(targetyear: int):
+    query = basequery().filter(
+        kobe.place == "kobe",
+        kix.place == "kix",
+        tomogashima.place == "tomogashima",
+        akashi.place == "akashi",
+        awaji.place == "awaji",
+        nishinomiya.place == "nishinomiya",
+        osaka.place == "osaka",
+        kobe.datetime >= datetime.datetime(targetyear, 1, 1),
+        kobe.datetime <= datetime.datetime(targetyear, 12, 31))\
+        .order_by(kobe.datetime)
+
+    return query
+
+
+def basequery():
+    return select(
         (kobe.inferiority).label("kobe_inferiority"),
         (kix.inferiority).label("kix_inferiority"),
         (tomogashima.inferiority).label("tomogashima_inferiority"),
@@ -98,52 +131,10 @@ def get_train_sqlresult(targetyear: int):
     )\
         .join(kix, kobe.datetime == kix.datetime)\
         .join(tomogashima, kobe.datetime == tomogashima.datetime)\
+        .join(akashi, kobe.datetime == akashi.datetime)\
+        .join(awaji, kobe.datetime == awaji.datetime)\
+        .join(nishinomiya, kobe.datetime == nishinomiya.datetime)\
+        .join(osaka, kobe.datetime == osaka.datetime)\
         .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)\
         .join(WaveTb, kobe.datetime == WaveTb.datetime)\
-        .join(TemperatureTb, kobe.datetime == TemperatureTb.datetime)\
-        .filter(
-        kobe.place == "kobe",
-        kix.place == "kix",
-        tomogashima.place == "tomogashima",
-        or_(
-            kobe.datetime < datetime.datetime(targetyear, 1, 1),
-            kobe.datetime > datetime.datetime(targetyear, 12, 31)))\
-        .order_by(kobe.datetime)
-
-    return query
-
-
-def get_eval_sqlresult(targetyear: int):
-    query = select(
-        (kobe.inferiority).label("kobe_inferiority"),
-        (kix.inferiority).label("kix_inferiority"),
-        (tomogashima.inferiority).label("tomogashima_inferiority"),
-        (WaveTb.inferiority).label("wave_inferiority"),
-        (kobe.datetime).label("datetime"),
-        (kobe.latitude_velocity).label("kobe_latitude_velocity"),
-        (kobe.longitude_velocity).label("kobe_longitude_velocity"),
-        (TemperatureTb.temperature).label("temperature"),
-        (kix.latitude_velocity).label("kix_latitude_velocity"),
-        (kix.longitude_velocity).label("kix_longitude_velocity"),
-        (tomogashima.latitude_velocity).label(
-            "tomogashima_latitude_velocity"),
-        (tomogashima.longitude_velocity).label(
-            "tomogashima_longitude_velocity"),
-        (AirPressureTb.air_pressure).label("air_pressure"),
-        (WaveTb.significant_height).label("height"),
-        (WaveTb.significant_period).label("period")
-    )\
-        .join(kix, kobe.datetime == kix.datetime)\
-        .join(tomogashima, kobe.datetime == tomogashima.datetime)\
-        .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)\
-        .join(WaveTb, kobe.datetime == WaveTb.datetime)\
-        .join(TemperatureTb, kobe.datetime == TemperatureTb.datetime)\
-        .filter(
-        kobe.place == "kobe",
-        kix.place == "kix",
-        tomogashima.place == "tomogashima",
-        kobe.datetime >= datetime.datetime(targetyear, 1, 1),
-        kobe.datetime <= datetime.datetime(targetyear, 12, 31))\
-        .order_by(kobe.datetime)
-
-    return query
+        .join(TemperatureTb, kobe.datetime == TemperatureTb.datetime)
