@@ -12,7 +12,7 @@ class DatasetBaseModel(IterableDataset):
     def __init__(
             self, forecast_hour: int, train_hour: int, ormquery):
 
-        super(DatasetBaseModel).__init__()
+        super().__init__()
         engine = create_engine("sqlite:///database/dataset.db", echo=False)
         SessionClass = orm.sessionmaker(engine)
 
@@ -170,3 +170,29 @@ class EvalDatasetModel(DatasetBaseModel):
 
     def get_real_values(self) -> torch.Tensor:
         return torch.stack([val for _, val in self], dim=0)
+
+
+def classConvert(label):
+    classTensor = torch.arange(0.25, 2.25, 0.25)
+    index = torch.argmin(torch.abs(classTensor - label))
+    return classTensor[index]
+
+
+class TrainClassificationDataSetModel(TrainDatasetModel):
+    def __init__(self, forecast_hour: int, train_hour: int, targetyear: int):
+        super().__init__(forecast_hour, train_hour, targetyear)
+
+    def __next__(self):
+        data, label = super().__next__()
+        label = classConvert(label)
+        return data, label
+
+
+class EvalClassificationDataSetModel(EvalDatasetModel):
+    def __init__(self, forecast_hour: int, train_hour: int, targetyear: int):
+        super().__init__(forecast_hour, train_hour, targetyear)
+
+    def __next__(self):
+        data, label = super().__next__()
+        label = classConvert(label)
+        return data, label
