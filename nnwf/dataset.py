@@ -13,7 +13,7 @@ class DatasetBaseModel(IterableDataset):
             self, forecastHour: int, trainHour: int, query):
 
         super(DatasetBaseModel).__init__()
-        engine = create_engine("sqlite:///database/dataset.db", echo=False)
+        engine = create_engine("sqlite:///database/dataset.db", echo=True)
         SessionClass = orm.sessionmaker(engine)
 
         self.__session: orm.session.Session = SessionClass()
@@ -57,9 +57,8 @@ class DatasetBaseModel(IterableDataset):
 
     def __next__(self):
         self.__reloadSomeRows()
-        data = self.__traindataMolding(self.__someRows, self.trainHour)
-        label = self.__labelMolding(
-            self.__someRows, self.trainHour, self.forecastHour)
+        data = self.__traindataMolding()
+        label = self.__labelMolding()
         self.__someRows.pop(0)
         return torch.Tensor(data), torch.Tensor(label)
 
@@ -83,8 +82,9 @@ class DatasetBaseModel(IterableDataset):
     def __isInferiority(self):
         for row in self.__someRows:
             for key in row.keys():
-                if row[key].inferiority:
-                    return True
+                if "_inferiority" in key:
+                    if row[key]:
+                        return True
         return False
 
     def __traindataMolding(self) -> list:
@@ -97,7 +97,7 @@ class DatasetBaseModel(IterableDataset):
             sin_hour = math.sin(normalize_hour)
             cos_hour = math.cos(normalize_hour)
             isWindWave = False if row.period > row.height * 4 + 2 else True
-            print(row.datetime)
+
             data.extend([
                 sin_month,
                 cos_month,
@@ -114,10 +114,6 @@ class DatasetBaseModel(IterableDataset):
                 row.tomogashima_longitude_velocity,
                 row.akashi_latitude_velocity,
                 row.akashi_longitude_velocity,
-                row.awaji_latitude_velocity,
-                row.awaji_longitude_velocity,
-                row.nishinomiya_latitude_velocity,
-                row.nishinomiya_longitude_velocity,
                 row.osaka_latitude_velocity,
                 row.osaka_longitude_velocity,
                 row.height,
@@ -125,10 +121,10 @@ class DatasetBaseModel(IterableDataset):
             ])
         return data
 
-    def __labelMolding(self, rows, train_hour, forecast_hour) -> list:
+    def __labelMolding(self) -> list:
         data = []
-        forecast_index = train_hour + forecast_hour - 1
-        for row in rows[forecast_index: forecast_index + 1]:
+        forecast_index = self.trainHour + self.forecastHour - 1
+        for row in self.__someRows[forecast_index: forecast_index + 1]:
             data.extend([
                 row.height
             ])

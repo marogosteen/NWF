@@ -53,63 +53,83 @@ class TemperatureTb(Base):
     temperature = Column(REAL, primary_key=True)
 
 
-kobe = orm.aliased(WindTb, name="kobe")
-kix = orm.aliased(WindTb, name="kix")
-tomogashima = orm.aliased(WindTb, name="tomogashima")
-akashi = orm.aliased(WindTb, name="akashi")
-awaji = orm.aliased(WindTb, name="awaji")
-nishinomiya = orm.aliased(WindTb, name="nishinomiya")
-osaka = orm.aliased(WindTb, name="osaka")
+kobe:WindTb = orm.aliased(WindTb, name="kobe")
+kix:WindTb = orm.aliased(WindTb, name="kix")
+tomogashima:WindTb = orm.aliased(WindTb, name="tomogashima")
+akashi:WindTb = orm.aliased(WindTb, name="akashi")
+osaka:WindTb = orm.aliased(WindTb, name="osaka")
 
 
 def get_train_sqlresult(targetyear: int):
-    return basequery().filter(
-        or_(
-            kobe.datetime < datetime.datetime(targetyear, 1, 1),
-            kobe.datetime > datetime.datetime(targetyear, 12, 31)))\
+    return select(
+        (kobe.inferiority).label("kobe_inferiority"),
+        (kix.inferiority).label("kix_inferiority"),
+        (tomogashima.inferiority).label("tomogashima_inferiority"),
+        (akashi.inferiority).label("akashi_inferiority"),
+        (osaka.inferiority).label("osaka_inferiority"),
+        (TemperatureTb.inferiority).label("temperature_inferiority"),
+        (AirPressureTb.inferiority).label("airPressure_inferiority"),
+        (WaveTb.inferiority).label("wave_inferiority"),
+
+        (kobe.datetime).label("datetime"),
+
+        (kobe.latitude_velocity).label("kobe_latitude_velocity"),
+        (kobe.longitude_velocity).label("kobe_longitude_velocity"),
+        (kix.latitude_velocity).label("kix_latitude_velocity"),
+        (kix.longitude_velocity).label("kix_longitude_velocity"),
+        (tomogashima.latitude_velocity).label(
+            "tomogashima_latitude_velocity"),
+        (tomogashima.longitude_velocity).label(
+            "tomogashima_longitude_velocity"),
+        (akashi.latitude_velocity).label("akashi_latitude_velocity"),
+        (akashi.longitude_velocity).label("akashi_longitude_velocity"),
+        (osaka.latitude_velocity).label("osaka_latitude_velocity"),
+        (osaka.longitude_velocity).label("osaka_longitude_velocity"),
+
+        (TemperatureTb.temperature).label("temperature"),
+        (AirPressureTb.air_pressure).label("air_pressure"),
+        (WaveTb.significant_height).label("height"),
+        (WaveTb.significant_period).label("period")
+    )\
+        .join(kix, kobe.datetime == kix.datetime)\
+        .join(tomogashima, kobe.datetime == tomogashima.datetime)\
+        .join(akashi, kobe.datetime == akashi.datetime)\
+        .join(osaka, kobe.datetime == osaka.datetime)\
+        .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)\
+        .join(TemperatureTb, kobe.datetime == TemperatureTb.datetime)\
+        .join(WaveTb, kobe.datetime == WaveTb.datetime)\
+        .where(
+            kobe.place == "kobe",
+            kix.place == "kix",
+            tomogashima.place == "tomogashima",
+            akashi.place == "akashi",
+            osaka.place == "osaka",
+            or_(
+                kobe.datetime < datetime.date(targetyear, 1, 1),
+                kobe.datetime > datetime.date(targetyear, 12, 31))
+        )\
         .order_by(kobe.datetime)
 
 
 def getEvalSqlresult(targetyear: int):
     return basequery().filter(
-        kobe.datetime >= datetime.datetime(targetyear, 1, 1),
-        kobe.datetime <= datetime.datetime(targetyear, 12, 31))\
+        or_(
+            kobe.datetime >= datetime.datetime(targetyear, 1, 1),
+            kobe.datetime <= datetime.datetime(targetyear, 12, 31)))\
         .order_by(kobe.datetime)
 
 
 def basequery():
     return select(
-        kobe, kix, tomogashima, akashi, awaji, osaka,
-        TemperatureTb, AirPressureTb, WaveTb)\
-        .join(kix, kobe.datetime == kix.datetime)\
-        .join(tomogashima, kobe.datetime == tomogashima.datetime)\
-        .join(akashi, kobe.datetime == akashi.datetime)\
-        .join(awaji, kobe.datetime == awaji.datetime)\
-        .join(nishinomiya, kobe.datetime == nishinomiya.datetime)\
-        .join(osaka, kobe.datetime == osaka.datetime)\
-        .join(TemperatureTb, kobe.datetime == TemperatureTb.datetime)\
-        .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)\
-        .join(WaveTb, kobe.datetime == WaveTb.datetime)\
-        .filter(
-            kobe.place == "kobe",
-            kix.place == "kix",
-            tomogashima.place == "tomogashima",
-            akashi.place == "akashi",
-            awaji.place == "awaji",
-            nishinomiya.place == "nishinomiya",
-            osaka.place == "osaka")
-
-
-def hogebasequery():
-    selectedRecord = select(
         (kobe.inferiority).label("kobe_inferiority"),
         (kix.inferiority).label("kix_inferiority"),
         (tomogashima.inferiority).label("tomogashima_inferiority"),
         (akashi.inferiority).label("akashi_inferiority"),
-        (awaji.inferiority).label("awaji_inferiority"),
-        (nishinomiya.inferiority).label("nishinomiya_inferiority"),
         (osaka.inferiority).label("osaka_inferiority"),
+        (TemperatureTb.inferiority).label("temperature_inferiority"),
+        (AirPressureTb.inferiority).label("temperature_inferiority"),
         (WaveTb.inferiority).label("wave_inferiority"),
+
         (kobe.datetime).label("datetime"),
         (kobe.latitude_velocity).label("kobe_latitude_velocity"),
         (kobe.longitude_velocity).label("kobe_longitude_velocity"),
@@ -121,14 +141,9 @@ def hogebasequery():
             "tomogashima_longitude_velocity"),
         (akashi.latitude_velocity).label("akashi_latitude_velocity"),
         (akashi.longitude_velocity).label("akashi_longitude_velocity"),
-        (awaji.latitude_velocity).label("awaji_latitude_velocity"),
-        (awaji.longitude_velocity).label("awaji_longitude_velocity"),
-        (nishinomiya.latitude_velocity).label(
-            "nishinomiya_latitude_velocity"),
-        (nishinomiya.longitude_velocity).label(
-            "nishinomiya_longitude_velocity"),
         (osaka.latitude_velocity).label("osaka_latitude_velocity"),
         (osaka.longitude_velocity).label("osaka_longitude_velocity"),
+
         (TemperatureTb.temperature).label("temperature"),
         (AirPressureTb.air_pressure).label("air_pressure"),
         (WaveTb.significant_height).label("height"),
@@ -137,9 +152,13 @@ def hogebasequery():
         .join(kix, kobe.datetime == kix.datetime)\
         .join(tomogashima, kobe.datetime == tomogashima.datetime)\
         .join(akashi, kobe.datetime == akashi.datetime)\
-        .join(awaji, kobe.datetime == awaji.datetime)\
-        .join(nishinomiya, kobe.datetime == nishinomiya.datetime)\
         .join(osaka, kobe.datetime == osaka.datetime)\
         .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)\
         .join(WaveTb, kobe.datetime == WaveTb.datetime)\
-        .join(TemperatureTb, kobe.datetime == TemperatureTb.datetime)
+        .join(TemperatureTb, kobe.datetime == TemperatureTb.datetime)\
+        .filter(
+            kobe.place == "kobe",
+            kix.place == "kix",
+            tomogashima.place == "tomogashima",
+            akashi.place == "akashi",
+            osaka.place == "osaka")
