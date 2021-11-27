@@ -63,40 +63,45 @@ osaka = orm.aliased(WindTb, name="osaka")
 
 
 def get_train_sqlresult(targetyear: int):
-    query = basequery().filter(
-        kobe.place == "kobe",
-        kix.place == "kix",
-        tomogashima.place == "tomogashima",
-        akashi.place == "akashi",
-        awaji.place == "awaji",
-        nishinomiya.place == "nishinomiya",
-        osaka.place == "osaka",
+    return basequery().filter(
         or_(
             kobe.datetime < datetime.datetime(targetyear, 1, 1),
             kobe.datetime > datetime.datetime(targetyear, 12, 31)))\
         .order_by(kobe.datetime)
 
-    return query
 
-
-def get_eval_sqlresult(targetyear: int):
-    query = basequery().filter(
-        kobe.place == "kobe",
-        kix.place == "kix",
-        tomogashima.place == "tomogashima",
-        akashi.place == "akashi",
-        awaji.place == "awaji",
-        nishinomiya.place == "nishinomiya",
-        osaka.place == "osaka",
+def getEvalSqlresult(targetyear: int):
+    return basequery().filter(
         kobe.datetime >= datetime.datetime(targetyear, 1, 1),
         kobe.datetime <= datetime.datetime(targetyear, 12, 31))\
         .order_by(kobe.datetime)
 
-    return query
-
 
 def basequery():
     return select(
+        kobe, kix, tomogashima, akashi, awaji, osaka,
+        TemperatureTb, AirPressureTb, WaveTb)\
+        .join(kix, kobe.datetime == kix.datetime)\
+        .join(tomogashima, kobe.datetime == tomogashima.datetime)\
+        .join(akashi, kobe.datetime == akashi.datetime)\
+        .join(awaji, kobe.datetime == awaji.datetime)\
+        .join(nishinomiya, kobe.datetime == nishinomiya.datetime)\
+        .join(osaka, kobe.datetime == osaka.datetime)\
+        .join(TemperatureTb, kobe.datetime == TemperatureTb.datetime)\
+        .join(AirPressureTb, kobe.datetime == AirPressureTb.datetime)\
+        .join(WaveTb, kobe.datetime == WaveTb.datetime)\
+        .filter(
+            kobe.place == "kobe",
+            kix.place == "kix",
+            tomogashima.place == "tomogashima",
+            akashi.place == "akashi",
+            awaji.place == "awaji",
+            nishinomiya.place == "nishinomiya",
+            osaka.place == "osaka")
+
+
+def hogebasequery():
+    selectedRecord = select(
         (kobe.inferiority).label("kobe_inferiority"),
         (kix.inferiority).label("kix_inferiority"),
         (tomogashima.inferiority).label("tomogashima_inferiority"),

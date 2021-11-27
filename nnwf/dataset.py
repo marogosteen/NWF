@@ -10,19 +10,19 @@ from nnwf import orm as nnwf_orm
 
 class DatasetBaseModel(IterableDataset):
     def __init__(
-            self, forecast_hour: int, train_hour: int, ormquery):
+            self, forecastHour: int, trainHour: int, query):
 
         super(DatasetBaseModel).__init__()
         engine = create_engine("sqlite:///database/dataset.db", echo=False)
         SessionClass = orm.sessionmaker(engine)
 
-        self.__active_session: orm.session.Session = SessionClass()
-        self.__query = ormquery
-        self.forecast_hour = forecast_hour
-        self.train_hour = train_hour
-        self.len = self.__get_len()
+        self.__session: orm.session.Session = SessionClass()
+        self.__query = query
+        self.forecastHour = forecastHour
+        self.trainHour = trainHour
+        self.len = self.__countData()
 
-    def __get_len(self):
+    def __countData(self):
         for count, _ in enumerate(self):
             continue
         return count
@@ -31,64 +31,65 @@ class DatasetBaseModel(IterableDataset):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.__active_session.close()
+        self.__session.close()
 
     def __len__(self):
         return self.len
 
     def __iter__(self):
-        self.__sqlresult = self.__active_session.execute(self.__query)
-        self.__fetchmany()
-        self.__rows = self.__fill_rows()
+        self.__sqlResult = self.__session.execute(self.__query)
+        self.__fetchSqlResult()
+        self.__someRows = self.__fillSomeRows()
         return self
 
-    def __fetchmany(self):
-        list_buffer = self.__sqlresult.fetchmany(10000)
-        if not list_buffer:
+    def __fetchSqlResult(self):
+        buffer = self.__sqlResult.fetchmany(10000)
+        if not buffer:
             raise StopIteration
-        self.__iter_buffer = iter(list_buffer)
+        self.__iterBuffer = iter(buffer)
 
-    def __fill_rows(self) -> list:
+    def __fillSomeRows(self) -> list:
         rows = []
-        for _ in range(self.forecast_hour + self.train_hour - 1):
-            record = next(self.__iter_buffer)
+        for _ in range(self.forecastHour + self.trainHour - 1):
+            record = next(self.__iterBuffer)
             rows.append(record)
         return rows
 
     def __next__(self):
-        while True:
-            row = self.__buffer_next()
-            self.__rows.append(row)
-            is_inferiority = self.__inferiority_detector(self.__rows)
-            if is_inferiority:
-                self.__rows.pop(0)
-            else:
-                break
-        data = self.__traindata_molding(self.__rows, self.train_hour)
-        label = self.__label_molding(
-            self.__rows, self.train_hour, self.forecast_hour)
-        self.__rows.pop(0)
+        self.__reloadSomeRows()
+        data = self.__traindataMolding(self.__someRows, self.trainHour)
+        label = self.__labelMolding(
+            self.__someRows, self.trainHour, self.forecastHour)
+        self.__someRows.pop(0)
         return torch.Tensor(data), torch.Tensor(label)
 
-    def __buffer_next(self):
+    def __reloadSomeRows(self):
+        while True:
+            row = self.__bufferNext()
+            self.__someRows.append(row)
+            if self.__isInferiority():
+                self.__someRows.pop(0)
+            else:
+                break
+
+    def __bufferNext(self):
         try:
-            row = next(self.__iter_buffer)
+            row = next(self.__iterBuffer)
         except StopIteration:
-            self.__fetchmany()
-            row = next(self.__iter_buffer)
+            self.__fetchSqlResult()
+            row = next(self.__iterBuffer)
         return row
 
-    def __inferiority_detector(self, rows):
-        for row in rows:
-            inferiority = row.kobe_inferiority or row.kix_inferiority or\
-                row.tomogashima_inferiority or row.wave_inferiority
-            if inferiority:
-                return True
+    def __isInferiority(self):
+        for row in self.__someRows:
+            for key in row.keys():
+                if row[key].inferiority:
+                    return True
         return False
 
-    def __traindata_molding(self, rows, train_hour) -> list:
+    def __traindataMolding(self) -> list:
         data = []
-        for row in rows[:train_hour]:
+        for row in self.__someRows[:self.trainHour]:
             normalize_month = row.datetime.month / 12
             normalize_hour = row.datetime.hour / 24
             sin_month = math.sin(normalize_month)
@@ -96,7 +97,7 @@ class DatasetBaseModel(IterableDataset):
             sin_hour = math.sin(normalize_hour)
             cos_hour = math.cos(normalize_hour)
             isWindWave = False if row.period > row.height * 4 + 2 else True
-
+            print(row.datetime)
             data.extend([
                 sin_month,
                 cos_month,
@@ -124,7 +125,7 @@ class DatasetBaseModel(IterableDataset):
             ])
         return data
 
-    def __label_molding(self, rows, train_hour, forecast_hour) -> list:
+    def __labelMolding(self, rows, train_hour, forecast_hour) -> list:
         data = []
         forecast_index = train_hour + forecast_hour - 1
         for row in rows[forecast_index: forecast_index + 1]:
@@ -134,19 +135,19 @@ class DatasetBaseModel(IterableDataset):
         return data
 
     def close(self):
-        self.__active_session.close()
+        self.__session.close()
 
 
 class TrainDatasetModel(DatasetBaseModel):
     def __init__(
             self, forecast_hour: int, train_hour: int, targetyear: int):
-        ormquery = nnwf_orm.get_train_sqlresult(targetyear)
+        query = nnwf_orm.get_train_sqlresult(targetyear)
         super().__init__(
-            forecast_hour, train_hour, ormquery)
-        self.mean = self.__get_mean(self.len)
-        self.std = self.__get_std(self.len, self.mean)
+            forecast_hour, train_hour, query)
+        self.mean = self.__getMean(self.len)
+        self.std = self.__getStd(self.len, self.mean)
 
-    def __get_mean(self, len):
+    def __getMean(self, len):
         mean = None
         for traindata, _ in self:
             traindata = traindata.numpy()
@@ -155,7 +156,7 @@ class TrainDatasetModel(DatasetBaseModel):
             mean += traindata / len
         return torch.FloatTensor(mean)
 
-    def __get_std(self, len, mean):
+    def __getStd(self, len, mean):
         mean = mean.numpy()
         var = None
         for traindata, _ in self:
@@ -170,9 +171,9 @@ class TrainDatasetModel(DatasetBaseModel):
 class EvalDatasetModel(DatasetBaseModel):
     def __init__(
             self, forecast_hour: int, train_hour: int, targetyear: int):
-        ormquery = nnwf_orm.get_eval_sqlresult(targetyear)
+        query = nnwf_orm.getEvalSqlresult(targetyear)
         super().__init__(
-            forecast_hour, train_hour, ormquery)
+            forecast_hour, train_hour, query)
 
-    def get_real_values(self) -> torch.Tensor:
+    def getRealValues(self) -> torch.Tensor:
         return torch.stack([val for _, val in self], dim=0)
