@@ -13,7 +13,7 @@ class DatasetBaseModel(IterableDataset):
             self, forecastHour: int, trainHour: int, query):
 
         super(DatasetBaseModel).__init__()
-        engine = create_engine("sqlite:///database/dataset.db", echo=True)
+        engine = create_engine("sqlite:///database/dataset.db", echo=False)
         SessionClass = orm.sessionmaker(engine)
 
         self.__session: orm.session.Session = SessionClass()
