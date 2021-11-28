@@ -103,9 +103,11 @@ class DatasetBaseModel(IterableDataset):
                 cos_month,
                 sin_hour,
                 cos_hour,
+
                 isWindWave,
                 row.air_pressure,
                 row.temperature,
+
                 row.kobe_latitude_velocity,
                 row.kobe_longitude_velocity,
                 row.kix_latitude_velocity,
@@ -116,6 +118,7 @@ class DatasetBaseModel(IterableDataset):
                 row.akashi_longitude_velocity,
                 row.osaka_latitude_velocity,
                 row.osaka_longitude_velocity,
+
                 row.height,
                 row.period
             ])

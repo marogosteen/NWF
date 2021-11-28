@@ -76,4 +76,4 @@ for year in [2016, 2017, 2018, 2019]:
     logModel.draw_loss(caseName)
 
 
-print("\nDone!\n")
+print(f"\nDone! {config.caseName}\n")
