@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from sqlalchemy.sql.expression import label
 import torch
 from torch.utils.data import IterableDataset
 
@@ -16,12 +17,12 @@ class DatasetBaseModel(IterableDataset):
         self.forecastHour = forecastHour
         self.trainHour = trainHour
         self.someRecords = []
-        self.len = self.__countData()
+        self.len, self.dataSize = self.__shape()
 
-    def __countData(self):
-        for count, _ in enumerate(self):
+    def __shape(self):
+        for count, (data, label) in enumerate(self):
             continue
-        return count
+        return count, len(data)
 
     def __enter__(self):
         return self
