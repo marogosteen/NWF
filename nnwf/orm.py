@@ -1,5 +1,6 @@
 import datetime
 
+from sqlalchemy import create_engine
 from sqlalchemy import orm, select, Column, INTEGER, REAL, TEXT
 from sqlalchemy.dialects.sqlite import DATETIME
 from sqlalchemy.ext.declarative import declarative_base
@@ -60,6 +61,36 @@ akashi: WindTb = orm.aliased(WindTb, name="akashi")
 osaka: WindTb = orm.aliased(WindTb, name="osaka")
 
 
+class DbService():
+    def __init__(self, query):
+        engine = create_engine("sqlite:///database/dataset.db", echo=False)
+        SessionClass = orm.sessionmaker(engine)
+        self.__session: orm.session.Session = SessionClass()
+        self.__query = query
+        self.__sqlResult = self.__session.execute(query)
+
+    def close(self):
+        self.__session.close()
+
+    def initQuery(self):
+        self.__sqlResult = self.__session.execute(self.__query)
+
+    def fetchMany(self):
+        buffer = self.__sqlResult.fetchmany(10000)
+        if not buffer:
+            raise StopIteration
+        self.__buffer = iter(buffer)
+
+    def nextRecord(self):
+        try:
+            record = next(self.__buffer)
+        except StopIteration:
+            self.fetchMany()
+            record = next(self.__buffer)
+
+        return record
+
+
 def get_train_sqlresult(targetyear: int):
     return basequery().where(
         or_(
@@ -71,7 +102,8 @@ def get_train_sqlresult(targetyear: int):
 def getEvalSqlresult(targetyear: int):
     return basequery().where(
         kobe.datetime > datetime.date(targetyear, 1, 1),
-        kobe.datetime < (datetime.datetime(targetyear, 12, 31) + datetime.timedelta(days=1))
+        kobe.datetime < (datetime.datetime(
+            targetyear, 12, 31) + datetime.timedelta(days=1))
     ).order_by(kobe.datetime)
 
 
