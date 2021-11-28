@@ -42,7 +42,7 @@ for year in [2016, 2017, 2018, 2019]:
 
         transform = transforms.Lambda(lambda x: (
             x - train_dataset.mean)/train_dataset.std)
-        real_values = eval_dataset.get_real_values()
+        real_values = eval_dataset.getRealValues()
 
         trainDataLoader = DataLoader(
             train_dataset, batch_size=config.batchSize)
@@ -76,4 +76,4 @@ for year in [2016, 2017, 2018, 2019]:
     logModel.draw_loss(caseName)
 
 
-print("\nDone!\n")
+print(f"\nDone! {config.caseName}\n")
