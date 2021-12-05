@@ -19,7 +19,7 @@ class DatasetBaseModel(IterableDataset):
         self.len, self.dataSize = self.__shape()
 
     def __shape(self):
-        for count, (data, label) in enumerate(self):
+        for count, (data, _) in enumerate(self):
             continue
         return count, len(data)
 
@@ -80,7 +80,7 @@ class DatasetBaseModel(IterableDataset):
             cos_month = math.cos(normalize_month)
             sin_hour = math.sin(normalize_hour)
             cos_hour = math.cos(normalize_hour)
-            isWindWave = False if row.period > row.height * 4 + 2 else True
+            isWindWave = int(False if row.period > row.height * 4 + 2 else True)
 
             data.extend([
                 sin_month,
@@ -106,12 +106,12 @@ class DatasetBaseModel(IterableDataset):
                 row.height,
                 row.period
             ])
+
         return data
 
     def __labelMolding(self) -> list:
         data = []
-        forecast_index = self.trainHour + self.forecastHour - 1
-        for row in self.someRecords[forecast_index: forecast_index + 1]:
+        for row in self.someRecords[self.trainHour: self.trainHour + self.forecastHour]:
             data.extend([
                 row.height
             ])

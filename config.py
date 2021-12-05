@@ -15,6 +15,7 @@ class Config():
         self.earlyStopEndure = int(config.get(section, "earlystop_endure"))
         self.targetYear = int(config.get(section, "targetyear"))
         self.trainHour = int(config.get(section, "trainhour"))
+        self.forecastHour = int(config.get(section, "forecasthour"))
 
     def save(self, savedir):
         with open(savedir+"configLog.json", mode="w") as f:

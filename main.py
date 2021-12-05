@@ -1,4 +1,5 @@
 import os
+
 import torch
 from torch import nn
 from torch import optim
@@ -30,8 +31,8 @@ for year in [2016, 2017, 2018, 2019]:
     if not os.path.exists(savedir):
         os.mkdir(savedir)
 
-    with TrainDatasetModel(forecast_hour=1, train_hour=config.trainHour, targetyear=config.targetYear) as train_dataset, \
-            EvalDatasetModel(forecast_hour=1, train_hour=config.trainHour, targetyear=config.targetYear) as eval_dataset:
+    with TrainDatasetModel(forecast_hour=config.forecastHour, train_hour=config.trainHour, targetyear=config.targetYear) as train_dataset, \
+            EvalDatasetModel(forecast_hour=config.forecastHour, train_hour=config.trainHour, targetyear=config.targetYear) as eval_dataset:
         print(f"train length:{len(train_dataset)}",
               f"eval: length:{len(eval_dataset)}",
               f"input data size:{train_dataset.dataSize}\n", sep="\n")
@@ -45,7 +46,7 @@ for year in [2016, 2017, 2018, 2019]:
         evalDataLoader = DataLoader(eval_dataset, batch_size=config.batchSize)
 
         logModel = LogModel()
-        net = NNWF_Net(train_dataset.dataSize).to(device)
+        net = NNWF_Net(train_dataset.dataSize, config.forecastHour).to(device)
         learnigModel = LearningModel(
             net=net,
             optimizer=optim.Adam(net.parameters(), lr=config.learningRate),
@@ -62,11 +63,11 @@ for year in [2016, 2017, 2018, 2019]:
 
         with open(savedir+"/observed.csv", mode="w") as f:
             for line in real_values.tolist():
-                f.write(str(line[0]) + "\n")
+                f.write(",".join(list(map(str, line))) + "\n")
 
         with open(savedir+"/predicted.csv", mode="w") as f:
             for line in pred:
-                f.write(str(line[0]) + "\n")
+                f.write(",".join(list(map(str, line))) + "\n")
 
     torch.save(logModel.bestModelState, savedir+"/state_dict.pt")
     config.save(savedir)
