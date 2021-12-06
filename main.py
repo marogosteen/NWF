@@ -1,4 +1,5 @@
 import os
+
 import torch
 from torch import nn
 from torch import optim
@@ -30,15 +31,11 @@ for year in [2016, 2017, 2018, 2019]:
     if not os.path.exists(savedir):
         os.mkdir(savedir)
 
-    net = NNWF_Net().to(device)
-    optimizer = optim.Adam(net.parameters(), lr=config.learningRate)
-    lossFunc = nn.MSELoss()
-    logModel = LogModel()
-
-    with TrainDatasetModel(forecast_hour=1, train_hour=config.trainHour, targetyear=config.targetYear) as train_dataset, \
-            EvalDatasetModel(forecast_hour=1, train_hour=config.trainHour, targetyear=config.targetYear) as eval_dataset:
-        print(f"train length:{len(train_dataset)}\n",
-              f"eval: length:{len(eval_dataset)}\n")
+    with TrainDatasetModel(forecast_hour=config.forecastHour, train_hour=config.trainHour, targetyear=config.targetYear) as train_dataset, \
+            EvalDatasetModel(forecast_hour=config.forecastHour, train_hour=config.trainHour, targetyear=config.targetYear) as eval_dataset:
+        print(f"train length:{len(train_dataset)}",
+              f"eval: length:{len(eval_dataset)}",
+              f"input data size:{train_dataset.dataSize}\n", sep="\n")
 
         transform = transforms.Lambda(lambda x: (
             x - train_dataset.mean)/train_dataset.std)
@@ -48,10 +45,12 @@ for year in [2016, 2017, 2018, 2019]:
             train_dataset, batch_size=config.batchSize)
         evalDataLoader = DataLoader(eval_dataset, batch_size=config.batchSize)
 
+        logModel = LogModel()
+        net = NNWF_Net(train_dataset.dataSize, config.forecastHour).to(device)
         learnigModel = LearningModel(
             net=net,
-            lossFunc=lossFunc,
-            optimizer=optimizer,
+            optimizer=optim.Adam(net.parameters(), lr=config.learningRate),
+            lossFunc=nn.MSELoss(),
             trainDataLoader=trainDataLoader,
             evalDataLoader=evalDataLoader,
             transform=transform,
@@ -64,11 +63,11 @@ for year in [2016, 2017, 2018, 2019]:
 
         with open(savedir+"/observed.csv", mode="w") as f:
             for line in real_values.tolist():
-                f.write(str(line[0]) + "\n")
+                f.write(",".join(list(map(str, line))) + "\n")
 
         with open(savedir+"/predicted.csv", mode="w") as f:
             for line in pred:
-                f.write(str(line[0]) + "\n")
+                f.write(",".join(list(map(str, line))) + "\n")
 
     torch.save(logModel.bestModelState, savedir+"/state_dict.pt")
     config.save(savedir)
