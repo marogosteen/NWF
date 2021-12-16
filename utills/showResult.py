@@ -6,9 +6,11 @@ import utills
 casedir = utills.get_showcase_dir()
 print(f"\n{casedir}", end="\n\n")
 
-for col in range(5):
-    observed = np.loadtxt(casedir+"observed.csv", delimiter=",", dtype=np.float64)[:, col]
-    pred = np.loadtxt(casedir+"predicted.csv", delimiter=",", dtype=np.float64)[:, col]
+for col in range(1):
+    # observed = np.loadtxt(casedir+"observed.csv", delimiter=",", dtype=np.float64)[:, col]
+    observed = np.loadtxt(casedir+"observed.csv", delimiter=",", dtype=np.float64)
+    # pred = np.loadtxt(casedir+"predicted.csv", delimiter=",", dtype=np.float64)[:, col]
+    pred = np.loadtxt(casedir+"predicted.csv", delimiter=",", dtype=np.float64)
 
     alldata_count = observed.shape
     mse = np.mean(np.square(observed - pred))

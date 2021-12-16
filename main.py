@@ -9,7 +9,7 @@ from torchvision import transforms
 from config import Config
 from nnwf.learn import LearningModel
 from nnwf.net import NNWF_Net
-from nnwf.dataset import TrainDatasetModel, EvalDatasetModel
+from nnwf.dataset import TrainDatasetModel as Tds, EvalDatasetModel as Eds
 from nnwf.log import LogModel
 
 
@@ -31,15 +31,14 @@ for year in [2016, 2017, 2018, 2019]:
     if not os.path.exists(savedir):
         os.mkdir(savedir)
 
-    with TrainDatasetModel(forecast_hour=config.forecastHour, train_hour=config.trainHour, targetyear=config.targetYear) as train_dataset, \
-            EvalDatasetModel(forecast_hour=config.forecastHour, train_hour=config.trainHour, targetyear=config.targetYear) as eval_dataset:
+    with Tds(forecast_hour=config.forecastHour, train_hour=config.trainHour, targetyear=config.targetYear) as train_dataset, \
+            Eds(forecast_hour=config.forecastHour, train_hour=config.trainHour, targetyear=config.targetYear) as eval_dataset:
         print(f"train length:{len(train_dataset)}",
               f"eval: length:{len(eval_dataset)}",
               f"input data size:{train_dataset.dataSize}\n", sep="\n")
 
         transform = transforms.Lambda(lambda x: (
             x - train_dataset.mean)/train_dataset.std)
-        real_values = eval_dataset.getRealValues()
 
         trainDataLoader = DataLoader(
             train_dataset, batch_size=config.batchSize)
@@ -61,8 +60,9 @@ for year in [2016, 2017, 2018, 2019]:
         logModel.showResult()
         pred = learnigModel.getBestPredictedValue(logModel.bestModelState)
 
+        observed = eval_dataset.getRealValues()
         with open(savedir+"/observed.csv", mode="w") as f:
-            for line in real_values.tolist():
+            for line in observed.tolist():
                 f.write(",".join(list(map(str, line))) + "\n")
 
         with open(savedir+"/predicted.csv", mode="w") as f:

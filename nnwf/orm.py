@@ -11,6 +11,7 @@ Base = declarative_base()
 Datatime = DATETIME(
     storage_format="%(year)04d-%(month)02d-%(day)02d %(hour)02d:%(minute)02d",
     regexp=r"(\d+)-(\d+)-(\d+) (\d+):(\d+)")
+dbPath = "sqlite:///database/dataset.sqlite"
 
 
 class WindTb(Base):
@@ -18,8 +19,9 @@ class WindTb(Base):
     datetime = Column(Datatime, primary_key=True)
     place = Column(TEXT, primary_key=True)
     inferiority = Column(INTEGER, primary_key=True)
-    latitude_velocity = Column(REAL, primary_key=True)
-    longitude_velocity = Column(REAL, primary_key=True)
+    velocity = Column(REAL, primary_key=True)
+    sin_direction = Column(REAL, primary_key=True)
+    cos_direction = Column(REAL, primary_key=True)
 
 
 class WaveTb(Base):
@@ -63,7 +65,7 @@ osaka: WindTb = orm.aliased(WindTb, name="osaka")
 
 class DbService():
     def __init__(self, query):
-        engine = create_engine("sqlite:///database/dataset.db", echo=False)
+        engine = create_engine(dbPath, echo=False)
         SessionClass = orm.sessionmaker(engine)
         self.__session: orm.session.Session = SessionClass()
         self.__query = query
@@ -74,6 +76,7 @@ class DbService():
 
     def initQuery(self):
         self.__sqlResult = self.__session.execute(self.__query)
+        self.fetchMany()
 
     def fetchMany(self):
         buffer = self.__sqlResult.fetchmany(10000)
@@ -81,7 +84,7 @@ class DbService():
             raise StopIteration
         self.__buffer = iter(buffer)
 
-    def nextRecord(self):
+    def nextRecord(self) -> list:
         try:
             record = next(self.__buffer)
         except StopIteration:
@@ -101,9 +104,8 @@ def get_train_sqlresult(targetyear: int):
 
 def getEvalSqlresult(targetyear: int):
     return basequery().where(
-        kobe.datetime > datetime.date(targetyear, 1, 1),
-        kobe.datetime < (datetime.datetime(
-            targetyear, 12, 31) + datetime.timedelta(days=1))
+        kobe.datetime >= datetime.date(targetyear, 1, 1),
+        kobe.datetime < (datetime.datetime(targetyear, 12, 31) + datetime.timedelta(days=1))
     ).order_by(kobe.datetime)
 
 
@@ -120,18 +122,21 @@ def basequery():
 
         (kobe.datetime).label("datetime"),
 
-        (kobe.latitude_velocity).label("kobe_latitude_velocity"),
-        (kobe.longitude_velocity).label("kobe_longitude_velocity"),
-        (kix.latitude_velocity).label("kix_latitude_velocity"),
-        (kix.longitude_velocity).label("kix_longitude_velocity"),
-        (tomogashima.latitude_velocity).label(
-            "tomogashima_latitude_velocity"),
-        (tomogashima.longitude_velocity).label(
-            "tomogashima_longitude_velocity"),
-        (akashi.latitude_velocity).label("akashi_latitude_velocity"),
-        (akashi.longitude_velocity).label("akashi_longitude_velocity"),
-        (osaka.latitude_velocity).label("osaka_latitude_velocity"),
-        (osaka.longitude_velocity).label("osaka_longitude_velocity"),
+        (kobe.velocity).label("kobe_velocity"),
+        (kobe.sin_direction).label("kobe_sinDirection"),
+        (kobe.cos_direction).label("kobe_cosDirection"),
+        (kix.velocity).label("kix_velocity"),
+        (kix.sin_direction).label("kix_sinDirection"),
+        (kix.cos_direction).label("kix_cosDirection"),
+        (tomogashima.velocity).label("tomogashima_velocity"),
+        (tomogashima.sin_direction).label("tomogashima_sinDirection"),
+        (tomogashima.cos_direction).label("tomogashima_cosDirection"),
+        (akashi.velocity).label("akashi_velocity"),
+        (akashi.sin_direction).label("akashi_sinDirection"),
+        (akashi.cos_direction).label("akashi_cosDirection"),
+        (osaka.velocity).label("osaka_velocity"),
+        (osaka.sin_direction).label("osaka_sinDirection"),
+        (osaka.cos_direction).label("osaka_cosDirection"),
 
         (TemperatureTb.temperature).label("temperature"),
         (AirPressureTb.air_pressure).label("air_pressure"),

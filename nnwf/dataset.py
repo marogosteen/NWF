@@ -1,4 +1,5 @@
 import math
+import sys
 
 import numpy as np
 import torch
@@ -15,13 +16,13 @@ class DatasetBaseModel(IterableDataset):
         self.__dbService = service
         self.forecastHour = forecastHour
         self.trainHour = trainHour
-        self.someRecords = []
+        self.recordBuffer = []
         self.len, self.dataSize = self.__shape()
 
     def __shape(self):
         for count, (data, _) in enumerate(self):
             continue
-        return count, len(data)
+        return count + 1, len(data)
 
     def __enter__(self):
         return self
@@ -33,38 +34,53 @@ class DatasetBaseModel(IterableDataset):
         return self.len
 
     def __iter__(self):
+        self.recordBuffer = []
         self.__dbService.initQuery()
-        self.__dbService.fetchMany()
         return self
 
     def __next__(self):
+        self.__loadBuffer()
+        data = self.__traindataMolding()
+        label = self.__labelMolding()
+        return torch.Tensor(data), torch.Tensor(label)
+
+    def __loadBuffer(self):
+        """
+        DBから1Recordを読み、Bufferにappendする。
+        """
         while True:
-            if not self.someRecords:
-                self.__fillSomeRows()
-            self.someRecords.append(self.__dbService.nextRecord())
+            # BufferがEmpltyの場合、学習時間分のRecordを読む
+            if not self.recordBuffer:
+                self.__fillBuffer()
+            else:
+                self.recordBuffer.pop(0)
+                self.recordBuffer.append(self.__dbService.nextRecord())
 
             if self.__includedInferiority():
-                self.someRecords.pop(0)
                 continue
 
             break
 
-        if len(self.someRecords) != self.forecastHour + self.trainHour:
-            exit()
+        if len(self.recordBuffer) != self.trainHour + self.forecastHour:
+            print("error ", file=sys.stderr)
+            sys.exit(1)
 
-        data = self.__traindataMolding()
-        label = self.__labelMolding()
-        self.someRecords.pop(0)
+    def __fillBuffer(self):
+        """
+        学習時間分のRecordを読み、recordBufferに格納する。
+        """
+        if self.recordBuffer:
+            print("Error recordBufferが空ではない。", file=sys.stderr)
 
-        return torch.Tensor(data), torch.Tensor(label)
-
-    def __fillSomeRows(self) -> list:
-        for _ in range(self.forecastHour + self.trainHour - 1):
+        for _ in range(self.forecastHour + self.trainHour):
             record = self.__dbService.nextRecord()
-            self.someRecords.append(record)
+            self.recordBuffer.append(record)
 
     def __includedInferiority(self):
-        for row in self.someRecords:
+        """
+        recordBuffer内に不良Recordが含まれているかを返す
+        """
+        for row in self.recordBuffer:
             for key in row.keys():
                 if "_inferiority" in key:
                     if row[key]:
@@ -72,15 +88,23 @@ class DatasetBaseModel(IterableDataset):
         return False
 
     def __traindataMolding(self) -> list:
+        """
+        recordBufferに格納されたRecordを学習入力データに整形する。
+
+        Returns:
+            traindata(list): 学習用の整形された入力データ
+        """
         data = []
-        for row in self.someRecords[:self.trainHour]:
-            normalize_month = row.datetime.month / 12
-            normalize_hour = row.datetime.hour / 24
+        for index in range(self.trainHour):
+            record = self.recordBuffer[index]
+            normalize_month = record.datetime.month / 12
+            normalize_hour = record.datetime.hour / 24
             sin_month = math.sin(normalize_month)
             cos_month = math.cos(normalize_month)
             sin_hour = math.sin(normalize_hour)
             cos_hour = math.cos(normalize_hour)
-            isWindWave = int(False if row.period > row.height * 4 + 2 else True)
+            isWindWave = int(False if record.period >
+                             record.height * 4 + 2 else True)
 
             data.extend([
                 sin_month,
@@ -89,36 +113,73 @@ class DatasetBaseModel(IterableDataset):
                 cos_hour,
 
                 isWindWave,
-                row.air_pressure,
-                row.temperature,
+                record.air_pressure,
+                record.temperature,
 
-                row.kobe_latitude_velocity,
-                row.kobe_longitude_velocity,
-                row.kix_latitude_velocity,
-                row.kix_longitude_velocity,
-                row.tomogashima_latitude_velocity,
-                row.tomogashima_longitude_velocity,
-                row.akashi_latitude_velocity,
-                row.akashi_longitude_velocity,
-                row.osaka_latitude_velocity,
-                row.osaka_longitude_velocity,
+                record.kobe_velocity,
+                record.kobe_sinDirection,
+                record.kobe_cosDirection,
+                record.kix_velocity,
+                record.kix_sinDirection,
+                record.kix_cosDirection,
+                record.tomogashima_velocity,
+                record.tomogashima_sinDirection,
+                record.tomogashima_cosDirection,
+                record.akashi_velocity,
+                record.akashi_sinDirection,
+                record.akashi_cosDirection,
+                record.osaka_velocity,
+                record.osaka_sinDirection,
+                record.osaka_cosDirection,
 
-                row.height,
-                row.period
+                record.height,
+                record.period
             ])
 
         return data
 
     def __labelMolding(self) -> list:
+        """
+        recordBufferに格納されたRecordを学習の真値データ（Label）に整形する。
+
+        Returns:
+            traindata(list): 学習用の整形された真値データ（Label）
+        """
         data = []
-        for row in self.someRecords[self.trainHour: self.trainHour + self.forecastHour]:
+        for index in range(self.trainHour, self.trainHour + self.forecastHour):
+            record = self.recordBuffer[index]
             data.extend([
-                row.height
+                record.height
             ])
         return data
 
     def close(self):
         self.__session.close()
+
+    def datetimeList(self) -> list:
+        self.__dbService.initQuery()
+        datetimeList = []
+        while True:
+            try:
+                datetimeList.append(self.__dbService.nextRecord().datetime)
+            except StopIteration:
+                break
+        return datetimeList
+
+    def inferiorityList(self) -> list:
+        self.__iter__()
+        inferiorityList = [True for inferiority in range(self.trainHour)]
+        while True:
+            try:
+                if not self.recordBuffer:
+                    self.__fillBuffer()
+                else:
+                    self.recordBuffer.pop(0)
+                    self.recordBuffer.append(self.__dbService.nextRecord())
+                inferiorityList.append(self.__includedInferiority())
+            except StopIteration:
+                break
+        return inferiorityList
 
 
 class TrainDatasetModel(DatasetBaseModel):
@@ -132,7 +193,26 @@ class TrainDatasetModel(DatasetBaseModel):
         self.mean = self.__getMean(self.len)
         self.std = self.__getStd(self.len, self.mean)
 
-    def __getMean(self, len):
+    def __getMean(self, len: int) -> torch.FloatTensor:
+        """
+        stream bufferを用いて入力データの平均値を求める。
+
+        Args:
+            len (int): 学習データのRecord数（1入力データあたりのSizeでは無い。）
+
+        Returns:
+            torch.FloatTensor: 要素数が1Recordの入力Sizeと等しい、それぞれのデータの平均。
+
+        Example:
+            self = torch.tensor([[1, 2, 3], [3, 3, 3], [5, 6, 7]])
+
+            mean = __getMean( len(self) )
+
+            print(mean)
+
+            # tensor([3.0000, 3.6667, 4.3333])
+        """
+
         mean = None
         for traindata, _ in self:
             traindata = traindata.numpy()
@@ -141,15 +221,36 @@ class TrainDatasetModel(DatasetBaseModel):
             mean += traindata / len
         return torch.FloatTensor(mean)
 
-    def __getStd(self, len, mean):
+    def __getStd(self, len: int, mean: torch.FloatTensor):
+        """
+        stream bufferを用いて入力データの標準偏差を求める。
+
+        Args:
+            len (int): 学習データのRecord数（1入力データあたりのSizeでは無い。）
+
+        Returns:
+            torch.FloatTensor: 要素数が1Recordの入力Sizeと等しい、それぞれのデータの標準偏差。
+
+        Example:
+            self = torch.tensor([[1, 2, 3], [3, 3, 3], [5, 6, 7]])
+
+            mean = __getMean( len(self) )
+
+            std = __getStd(len(self), mean)
+
+            print(std)
+
+            # tensor([1.6330, 1.6997, 1.8856])
+        """
+
         mean = mean.numpy()
         var = None
         for traindata, _ in self:
             traindata = traindata.numpy()
             if var is None:
                 var = np.zeros(traindata.shape)
-            var += np.sum(np.square(traindata - mean))/len
-        std = np.sqrt(var)
+            var += np.square(traindata - mean)
+        std = np.sqrt(var/len)
         return torch.FloatTensor(std)
 
 
