@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import torch
 from torch import nn
 from torch import optim
@@ -10,8 +11,8 @@ from config import Config
 from nnwf.learn import LearningModel
 from nnwf.net import NNWF_Net
 from nnwf.dataset import TrainDatasetModel as Tds, EvalDatasetModel as Eds
-from nnwf.log import LogModel
-
+from nnwf.history import HistoryModel
+from nnwf.report import ReportModel
 
 """
 # TODO 
@@ -44,7 +45,7 @@ for year in [2016, 2017, 2018, 2019]:
             train_dataset, batch_size=config.batchSize)
         evalDataLoader = DataLoader(eval_dataset, batch_size=config.batchSize)
 
-        logModel = LogModel()
+        history = HistoryModel()
         net = NNWF_Net(train_dataset.dataSize, config.forecastHour).to(device)
         learnigModel = LearningModel(
             net=net,
@@ -56,23 +57,44 @@ for year in [2016, 2017, 2018, 2019]:
             earlyStopEndure=config.earlyStopEndure,
         )
 
-        logModel = learnigModel.fit(config.epochs, logModel)
-        logModel.showResult()
-        pred = learnigModel.getBestPredictedValue(logModel.bestModelState)
+        history = learnigModel.fit(config.epochs, history)
+        history.showResult()
 
-        observed = eval_dataset.getRealValues()
-        with open(savedir+"/observed.csv", mode="w") as f:
-            for line in observed.tolist():
-                f.write(",".join(list(map(str, line))) + "\n")
+        inferiorityArray = np.array(eval_dataset.inferiorityList(), dtype=object)
+        inferiorityArray = np.where(inferiorityArray==True, None, inferiorityArray)
 
-        with open(savedir+"/predicted.csv", mode="w") as f:
-            for line in pred:
-                f.write(",".join(list(map(str, line))) + "\n")
+        nextObserved = np.zeros((len(inferiorityArray), config.forecastHour), dtype=object)
+        for index in range(nextObserved.shape[1]):
+            nextObserved[:, index] = inferiorityArray
+        observed = eval_dataset.observed().numpy()
+        for colIndex in range(observed.shape[1]):
+            nextObserved[nextObserved[:, colIndex] == False, colIndex] = observed[:, colIndex]
 
-    torch.save(logModel.bestModelState, savedir+"/state_dict.pt")
+        nextPredicted = np.zeros((len(inferiorityArray), config.forecastHour), dtype=object)
+        for index in range(nextPredicted.shape[1]):
+            nextPredicted[:, index] = inferiorityArray
+        predicted = np.array(learnigModel.bestPredicted(bestModelState=history.bestModelState), dtype=object)
+        for colIndex in range(predicted.shape[1]):
+            nextPredicted[nextPredicted[:, colIndex] == False, colIndex] = predicted[:, colIndex]
+
+        observed = nextObserved.tolist()
+        predicted = nextObserved.tolist()
+
+        report = ReportModel(config, history, observed, predicted)
+        report.save(savedir+caseName+".json")
+
+        # with open(savedir+"/observed.csv", mode="w") as f:
+        #     for line in observed:
+        #         f.write(",".join(list(map(str, line))) + "\n")
+
+        # with open(savedir+"/predicted.csv", mode="w") as f:
+        #     for line in predicted:
+        #         f.write(",".join(list(map(str, line))) + "\n")
+
+    torch.save(history.bestModelState, savedir+"/state_dict.pt")
     config.save(savedir)
-    logModel.save_log(caseName)
-    logModel.draw_loss(caseName)
+    history.save_history(caseName)
+    history.draw_loss(caseName)
 
 
 print(f"\nDone! {config.caseName}\n")

@@ -1,5 +1,6 @@
 import math
 import sys
+import datetime
 
 import numpy as np
 import torch
@@ -161,7 +162,7 @@ class DatasetBaseModel(IterableDataset):
         datetimeList = []
         while True:
             try:
-                datetimeList.append(self.__dbService.nextRecord().datetime)
+                datetimeList.append(self.__dbService.nextRecord().datetime.strftime("%Y-%m-%d %H:%M"))
             except StopIteration:
                 break
         return datetimeList
@@ -262,7 +263,7 @@ class EvalDatasetModel(DatasetBaseModel):
         super().__init__(
             service, forecast_hour, train_hour)
 
-    def getRealValues(self) -> torch.Tensor:
+    def observed(self) -> torch.Tensor:
         return torch.stack([val for _, val in self], dim=0)
 
 

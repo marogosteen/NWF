@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 
 
-class LogModel():
+class HistoryModel():
     def __init__(self) -> None:
         self.train_loss_hist = []
         self.eval_loss_list = []
@@ -33,7 +33,7 @@ class LogModel():
     def save_best_model_state(self, save_path):
         torch.save(self.bestModelState, save_path)
 
-    def save_log(self, model_name):
+    def save_history(self, model_name):
         write_list = [
             f"best epoch {self.best_epoch()}\n",
             "best loss {:.6f}\n".format(self.best_loss()),

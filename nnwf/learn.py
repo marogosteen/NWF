@@ -3,7 +3,7 @@ import copy
 import tqdm
 import torch
 
-from nnwf.log import LogModel
+from nnwf.history import HistoryModel
 
 
 class LearningModel():
@@ -20,25 +20,25 @@ class LearningModel():
         self.transform = transform
         self.earlyStopEndure = earlyStopEndure
 
-    def fit(self, epochs:int, logModel: LogModel) -> LogModel:
+    def fit(self, epochs:int, history: HistoryModel) -> HistoryModel:
         for epoch in tqdm.tqdm(range(1, epochs+1)):
             trainLoss = self.__train(self.trainDataLoader, self.transform)
             evalLoss = self.__eval(self.evalDataLoader, self.transform)
-            logModel.train_loss_hist.append(trainLoss)
-            logModel.eval_loss_list.append(evalLoss)
+            history.train_loss_hist.append(trainLoss)
+            history.eval_loss_list.append(evalLoss)
 
-            if logModel.isBestLoss(evalLoss):
-                logModel.bestEpoch = epoch
-                logModel.bestLoss = evalLoss
-                logModel.bestModelState = copy.deepcopy(self.net.state_dict())
+            if history.isBestLoss(evalLoss):
+                history.bestEpoch = epoch
+                history.bestLoss = evalLoss
+                history.bestModelState = copy.deepcopy(self.net.state_dict())
 
-            if self.__isEarlyStop(logModel, self.earlyStopEndure):
+            if self.__isEarlyStop(history, self.earlyStopEndure):
                 print("[ Early Stop ]\n")
-                return logModel
+                return history
 
-        return logModel
+        return history
 
-    def getBestPredictedValue(self, bestModelState) -> list:
+    def bestPredicted(self, bestModelState) -> list:
         self.net.load_state_dict(bestModelState)
         self.net.eval()
         bestPredList = []
@@ -78,6 +78,6 @@ class LearningModel():
 
         return loss
 
-    def __isEarlyStop(self, log_model: LogModel, endure: int):
+    def __isEarlyStop(self, log_model: HistoryModel, endure: int):
         current_epoch = len(log_model.train_loss_hist)
         return endure < (current_epoch - log_model.best_epoch())
