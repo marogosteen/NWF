@@ -147,11 +147,10 @@ class DatasetBaseModel(IterableDataset):
             traindata(list): 学習用の整形された真値データ（Label）
         """
         data = []
-        for index in range(self.trainHour, self.trainHour + self.forecastHour):
-            record = self.recordBuffer[index]
-            data.extend([
-                record.height
-            ])
+        record = self.recordBuffer[self.trainHour + self.forecastHour - 1]
+        data.extend([
+            record.height
+        ])
         return data
 
     def close(self):
@@ -162,14 +161,15 @@ class DatasetBaseModel(IterableDataset):
         datetimeList = []
         while True:
             try:
-                datetimeList.append(self.__dbService.nextRecord().datetime.strftime("%Y-%m-%d %H:%M"))
+                datetimeList.append(
+                    self.__dbService.nextRecord().datetime.strftime("%Y-%m-%d %H:%M"))
             except StopIteration:
                 break
         return datetimeList
 
     def inferiorityList(self) -> list:
         self.__iter__()
-        inferiorityList = [True for inferiority in range(self.trainHour)]
+        inferiorityList = [True for _ in range(self.trainHour)]
         while True:
             try:
                 if not self.recordBuffer:
@@ -264,7 +264,7 @@ class EvalDatasetModel(DatasetBaseModel):
             service, forecast_hour, train_hour)
 
     def observed(self) -> torch.Tensor:
-        return torch.stack([val for _, val in self], dim=0)
+        return torch.cat([val for _, val in self], dim=0)
 
 
 def classConvert(label):

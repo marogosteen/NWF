@@ -46,7 +46,7 @@ for year in [2016, 2017, 2018, 2019]:
         evalDataLoader = DataLoader(eval_dataset, batch_size=config.batchSize)
 
         history = HistoryModel()
-        net = NNWF_Net(train_dataset.dataSize, config.forecastHour).to(device)
+        net = NNWF_Net(train_dataset.dataSize).to(device)
         learnigModel = LearningModel(
             net=net,
             optimizer=optim.Adam(net.parameters(), lr=config.learningRate),
@@ -60,25 +60,18 @@ for year in [2016, 2017, 2018, 2019]:
         history = learnigModel.fit(config.epochs, history)
         history.showResult()
 
-        inferiorityArray = np.array(eval_dataset.inferiorityList(), dtype=object)
-        inferiorityArray = np.where(inferiorityArray==True, None, inferiorityArray)
+        nextObserved = np.array(eval_dataset.inferiorityList(), dtype=object)
+        nextPredicted = np.copy(nextObserved)
 
-        nextObserved = np.zeros((len(inferiorityArray), config.forecastHour), dtype=object)
-        for index in range(nextObserved.shape[1]):
-            nextObserved[:, index] = inferiorityArray
         observed = eval_dataset.observed().numpy()
-        for colIndex in range(observed.shape[1]):
-            nextObserved[nextObserved[:, colIndex] == False, colIndex] = observed[:, colIndex]
+        nextObserved[nextObserved == False] = observed
 
-        nextPredicted = np.zeros((len(inferiorityArray), config.forecastHour), dtype=object)
-        for index in range(nextPredicted.shape[1]):
-            nextPredicted[:, index] = inferiorityArray
         predicted = np.array(learnigModel.bestPredicted(bestModelState=history.bestModelState), dtype=object)
-        for colIndex in range(predicted.shape[1]):
-            nextPredicted[nextPredicted[:, colIndex] == False, colIndex] = predicted[:, colIndex]
+        predicted = predicted.reshape(-1)
+        nextPredicted[nextPredicted == False] = predicted
 
         observed = nextObserved.tolist()
-        predicted = nextObserved.tolist()
+        predicted = nextPredicted.tolist()
 
         report = ReportModel(config, history, observed, predicted)
         report.save(savedir+caseName+".json")

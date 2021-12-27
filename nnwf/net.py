@@ -2,7 +2,7 @@ from torch import nn
 
 
 class NNWF_Net(nn.Module):
-    def __init__(self, inputSize, forecastHour):
+    def __init__(self, inputSize):
         super(NNWF_Net, self).__init__()
         self.linearSequential = nn.Sequential(
             nn.Linear(inputSize, 128),
@@ -20,7 +20,7 @@ class NNWF_Net(nn.Module):
             nn.Linear(32, 16),
             nn.ReLU(),
             nn.Dropout(0.5),
-            nn.Linear(16, forecastHour),
+            nn.Linear(16, 1),
         )
 
     def forward(self, x):
