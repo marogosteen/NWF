@@ -6,15 +6,14 @@ import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 
-from nnwf import orm as nnwf_orm
+from nnwf.dbfetcher import DbFetcher, RecordModel
 
 
 class DatasetBaseModel(IterableDataset):
     def __init__(
-            self, service: nnwf_orm.DbService, forecastHour: int, trainHour: int):
-
+            self, fetcher: DbFetcher, forecastHour: int, trainHour: int):
         super().__init__()
-        self.__dbService = service
+        self.__fetcher = fetcher
         self.forecastHour = forecastHour
         self.trainHour = trainHour
         self.recordBuffer = []
@@ -29,14 +28,14 @@ class DatasetBaseModel(IterableDataset):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.__dbService.close()
+        self.__fetcher.close()
 
     def __len__(self):
         return self.len
 
     def __iter__(self):
         self.recordBuffer = []
-        self.__dbService.initQuery()
+        self.__fetcher.executeSql()
         return self
 
     def __next__(self):
@@ -55,7 +54,7 @@ class DatasetBaseModel(IterableDataset):
                 self.__fillBuffer()
             else:
                 self.recordBuffer.pop(0)
-                self.recordBuffer.append(self.__dbService.nextRecord())
+                self.recordBuffer.append(self.__fetcher.nextRecord())
 
             if self.__includedInferiority():
                 continue
@@ -74,18 +73,17 @@ class DatasetBaseModel(IterableDataset):
             print("Error recordBufferが空ではない。", file=sys.stderr)
 
         for _ in range(self.forecastHour + self.trainHour):
-            record = self.__dbService.nextRecord()
+            record = self.__fetcher.nextRecord()
             self.recordBuffer.append(record)
 
     def __includedInferiority(self):
         """
         recordBuffer内に不良Recordが含まれているかを返す
         """
-        for row in self.recordBuffer:
-            for key in row.keys():
-                if "_inferiority" in key:
-                    if row[key]:
-                        return True
+        for record in self.recordBuffer:
+            for v in record.__dict__.values():
+                if v is None:
+                    return True
         return False
 
     def __traindataMolding(self) -> list:
@@ -93,17 +91,18 @@ class DatasetBaseModel(IterableDataset):
         recordBufferに格納されたRecordを学習入力データに整形する。
 
         Returns:
+        -----
             traindata(list): 学習用の整形された入力データ
         """
         data = []
         for index in range(self.trainHour):
-            record = self.recordBuffer[index]
+            record: RecordModel = self.recordBuffer[index]
             normalize_month = record.datetime.month / 12
             normalize_hour = record.datetime.hour / 24
-            sin_month = math.sin(normalize_month)
-            cos_month = math.cos(normalize_month)
-            sin_hour = math.sin(normalize_hour)
-            cos_hour = math.cos(normalize_hour)
+            sin_month = math.sin(2 * math.pi * normalize_month)
+            cos_month = math.cos(2 * math.pi * normalize_month)
+            sin_hour = math.sin(2 * math.pi * normalize_hour)
+            cos_hour = math.cos(2 * math.pi * normalize_hour)
             isWindWave = int(False if record.period >
                              record.height * 4 + 2 else True)
 
@@ -118,20 +117,20 @@ class DatasetBaseModel(IterableDataset):
                 record.temperature,
 
                 record.kobe_velocity,
-                record.kobe_sinDirection,
-                record.kobe_cosDirection,
+                record.kobe_sin_direction,
+                record.kobe_cos_direction,
                 record.kix_velocity,
-                record.kix_sinDirection,
-                record.kix_cosDirection,
+                record.kix_sin_direction,
+                record.kix_cos_direction,
                 record.tomogashima_velocity,
-                record.tomogashima_sinDirection,
-                record.tomogashima_cosDirection,
+                record.tomogashima_sin_direction,
+                record.tomogashima_cos_direction,
                 record.akashi_velocity,
-                record.akashi_sinDirection,
-                record.akashi_cosDirection,
+                record.akashi_sin_direction,
+                record.akashi_cos_direction,
                 record.osaka_velocity,
-                record.osaka_sinDirection,
-                record.osaka_cosDirection,
+                record.osaka_sin_direction,
+                record.osaka_cos_direction,
 
                 record.height,
                 record.period
@@ -144,6 +143,7 @@ class DatasetBaseModel(IterableDataset):
         recordBufferに格納されたRecordを学習の真値データ（Label）に整形する。
 
         Returns:
+        -----
             traindata(list): 学習用の整形された真値データ（Label）
         """
         data = []
@@ -157,12 +157,12 @@ class DatasetBaseModel(IterableDataset):
         self.__session.close()
 
     def datetimeList(self) -> list:
-        self.__dbService.initQuery()
+        self.__fetcher.initQuery()
         datetimeList = []
         while True:
             try:
                 datetimeList.append(
-                    self.__dbService.nextRecord().datetime.strftime("%Y-%m-%d %H:%M"))
+                    self.__fetcher.nextRecord().datetime.strftime("%Y-%m-%d %H:%M"))
             except StopIteration:
                 break
         return datetimeList
@@ -176,7 +176,7 @@ class DatasetBaseModel(IterableDataset):
                     self.__fillBuffer()
                 else:
                     self.recordBuffer.pop(0)
-                    self.recordBuffer.append(self.__dbService.nextRecord())
+                    self.recordBuffer.append(self.__fetcher.nextRecord())
                 inferiorityList.append(self.__includedInferiority())
             except StopIteration:
                 break
@@ -186,10 +186,9 @@ class DatasetBaseModel(IterableDataset):
 class TrainDatasetModel(DatasetBaseModel):
     def __init__(
             self, forecast_hour: int, train_hour: int, targetyear: int):
-        query = nnwf_orm.get_train_sqlresult(targetyear)
-        service = nnwf_orm.DbService(query)
+        fetcher = DbFetcher(targetyear, mode="train")
         super().__init__(
-            service, forecast_hour, train_hour)
+            fetcher, forecast_hour, train_hour)
 
         self.mean = self.__getMean(self.len)
         self.std = self.__getStd(self.len, self.mean)
@@ -199,12 +198,15 @@ class TrainDatasetModel(DatasetBaseModel):
         stream bufferを用いて入力データの平均値を求める。
 
         Args:
+        -----
             len (int): 学習データのRecord数（1入力データあたりのSizeでは無い。）
 
         Returns:
+        -----
             torch.FloatTensor: 要素数が1Recordの入力Sizeと等しい、それぞれのデータの平均。
 
         Example:
+        ------
             self = torch.tensor([[1, 2, 3], [3, 3, 3], [5, 6, 7]])
 
             mean = __getMean( len(self) )
@@ -227,12 +229,15 @@ class TrainDatasetModel(DatasetBaseModel):
         stream bufferを用いて入力データの標準偏差を求める。
 
         Args:
+        -----
             len (int): 学習データのRecord数（1入力データあたりのSizeでは無い。）
 
         Returns:
+        -----
             torch.FloatTensor: 要素数が1Recordの入力Sizeと等しい、それぞれのデータの標準偏差。
 
         Example:
+        -----
             self = torch.tensor([[1, 2, 3], [3, 3, 3], [5, 6, 7]])
 
             mean = __getMean( len(self) )
@@ -258,10 +263,9 @@ class TrainDatasetModel(DatasetBaseModel):
 class EvalDatasetModel(DatasetBaseModel):
     def __init__(
             self, forecast_hour: int, train_hour: int, targetyear: int):
-        query = nnwf_orm.getEvalSqlresult(targetyear)
-        service = nnwf_orm.DbService(query)
+        fetcher = DbFetcher(targetyear, mode="eval")
         super().__init__(
-            service, forecast_hour, train_hour)
+            fetcher, forecast_hour, train_hour)
 
     def observed(self) -> torch.Tensor:
         return torch.cat([val for _, val in self], dim=0)

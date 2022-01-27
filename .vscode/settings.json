@@ -1,9 +1,9 @@
 {
     "python.pythonPath": "./env/bin/python",
     "python.autoComplete.extraPaths":[
-        "./env/lib/site_packages/"
+        "./env/lib/python3.8/site-packages/"
     ],
     "python.analysis.extraPaths": [
-        "./env/lib/site_packages/"
+        "./env/lib/python3.8/site-packages/"
     ],
 }

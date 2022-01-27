@@ -9,10 +9,10 @@ from nnwf.history import HistoryModel
 
 class ReportModel():
     def __init__(
-            self, cfg: Config, history: HistoryModel,
+            self, casename, cfg: Config, history: HistoryModel,
             observed: list, predicted: list):
 
-        self.caseName: str = cfg.caseName + str(cfg.targetYear)
+        self.caseName: str = casename
         self.epochs: int = cfg.epochs
         self.batchSize: int = cfg.batchSize
         self.learningRate: float = cfg.learningRate
@@ -21,7 +21,7 @@ class ReportModel():
         self.trainHour: int = cfg.trainHour
         self.forecastHour: int = cfg.forecastHour
 
-        self.inferiorityCount: int = observed.count("False")
+        self.inferiorityCount: int = observed.count(None)
         self.dataCount: int = len(observed) - self.inferiorityCount
         self.bestEpoch: int = history.best_epoch()
         self.bestStd: float = round(math.sqrt(history.best_loss()), 3)

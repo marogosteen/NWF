@@ -21,15 +21,13 @@ class LearningModel():
         self.earlyStopEndure = earlyStopEndure
 
     def fit(self, epochs:int, history: HistoryModel) -> HistoryModel:
-        for epoch in tqdm.tqdm(range(1, epochs+1)):
+        for _ in tqdm.tqdm(range(1, epochs+1)):
             trainLoss = self.__train(self.trainDataLoader, self.transform)
             evalLoss = self.__eval(self.evalDataLoader, self.transform)
             history.train_loss_hist.append(trainLoss)
             history.eval_loss_list.append(evalLoss)
 
             if history.isBestLoss(evalLoss):
-                history.bestEpoch = epoch
-                history.bestLoss = evalLoss
                 history.bestModelState = copy.deepcopy(self.net.state_dict())
 
             if self.__isEarlyStop(history, self.earlyStopEndure):

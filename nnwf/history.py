@@ -8,16 +8,12 @@ class HistoryModel():
     def __init__(self) -> None:
         self.train_loss_hist = []
         self.eval_loss_list = []
-        self.bestEpoch = 0
-        self.bestLoss = None
         self.bestModelState = None
 
     def showResult(self):
         print("",
               "best epoch: ", f"\t{self.best_epoch()}",
-              "best epoch (param): ", f"\t{self.bestEpoch}",
               "best loss : ", f"\t{round(self.best_loss(), 7)}",
-              "best loss (param): ", f"\t{round(self.bestLoss, 7)}",
               sep="\n")
 
     def isBestLoss(self, currentLoss) -> bool:
