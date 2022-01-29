@@ -7,7 +7,7 @@ from matplotlib import dates
 import japanize_matplotlib
 import numpy as np
 
-from nnwf.report import ReportModel
+from nwf.report import ReportModel
 
 
 def calcrmse(observed, predicted):
@@ -39,27 +39,27 @@ def generateDatetimelist(year):
     return datetimelist
 
 
-def drawWaveHeight(savepath, observed, predicted, datetimelist):
-    plt.rcParams["font.size"] = 17
-    begindatetime = datetimelist[0]
-    enddatetime = datetimelist[-1]
+# def drawWaveHeight(savepath, observed, predicted, datetimelist):
+#     plt.rcParams["font.size"] = 17
+#     begindatetime = datetimelist[0]
+#     enddatetime = datetimelist[-1]
 
-    fig = plt.figure(figsize=(7, 5))
-    ax = fig.add_subplot(111, ylabel="有義波高 [m]", xlabel="日付",
-                         ylim=[0, 5], xlim=[begindatetime, enddatetime])
-    ax.plot(datetimelist, observed, label="観測値")
-    ax.plot(datetimelist, predicted, label="予測値")
-    plt.xticks(rotation=90)
-    plt.grid()
-    plt.legend()
-    plt.tight_layout()
+#     fig = plt.figure(figsize=(7, 5))
+#     ax = fig.add_subplot(111, ylabel="有義波高 [m]", xlabel="日付",
+#                          ylim=[0, 5], xlim=[begindatetime, enddatetime])
+#     ax.plot(datetimelist, observed, label="観測値")
+#     ax.plot(datetimelist, predicted, label="予測値")
+#     plt.xticks(rotation=90)
+#     plt.grid()
+#     plt.legend()
+#     plt.tight_layout()
 
-    plt.savefig(savepath)
-    plt.close()
+#     plt.savefig(savepath)
+#     plt.close()
 
 
-def drawJebi(savepath, observed, predicted, datetimelist):
-    plt.rcParams["font.size"] = 17
+def drawJebi(observed, predicted, datetimelist):
+    plt.rcParams["font.size"] = 15
     begindatetime = datetime.datetime(
         year=2018, month=8, day=23, hour=0, minute=0)
     enddatetime = datetime.datetime(
@@ -72,7 +72,7 @@ def drawJebi(savepath, observed, predicted, datetimelist):
         currentdatetime += duration
     print(ticks)
 
-    fig = plt.figure(figsize=(7, 5))
+    fig = plt.figure(figsize=(7, 6))
     ax = fig.add_subplot(111, ylabel="有義波高 [m]", xlabel="日付",
                          ylim=[0, 5], xlim=[begindatetime, enddatetime])
     ax.plot(datetimelist, observed, label="観測値")
@@ -85,7 +85,7 @@ def drawJebi(savepath, observed, predicted, datetimelist):
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig("typhoon.jpg")
+    plt.savefig("Jebi.jpg")
     plt.close()
 
 
@@ -106,10 +106,10 @@ for forecastHour in range(1, 6)[0:1]:
 
         casename = os.path.basename(os.path.dirname(jsonpath))
         datetimelist = generateDatetimelist(year)
-        drawWaveHeight(casename + ".jpg", observed, predicted, datetimelist)
+        # drawWaveHeight(casename + ".jpg", observed, predicted, datetimelist)
 
         if year == 2018:
-            drawJebi(casename + ".jpg", observed, predicted, datetimelist)
+            drawJebi(observed, predicted, datetimelist)
 
         mse, rmse, rmse05 = calcrmse(observed, predicted)
         print(

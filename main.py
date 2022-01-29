@@ -18,9 +18,12 @@ from nwf.report import ReportModel
 """
 # TODO 
     Datasetのbegin_year,end_yearのエラーハンドリングするべき
-    SQLをResultに残そ
     deploy作ろ
     dataset と inferiority detectorわけよ
+    EarlyStopはちょっとズルい感ある
+    DataSetの動作確認用のTest書きたい
+    波系やっていない
+    transform
 """
 
 config = Config()
@@ -54,8 +57,8 @@ for forecastHour in range(1, 6):
                   f"eval: length:{len(evalDataset)}",
                   f"input data size:{trainDataset.dataSize}\n", sep="\n")
 
-            transform = transforms.Lambda(lambda x: (
-                x - trainDataset.mean)/trainDataset.std)
+            transform = transforms.Lambda(
+                lambda x: (x - trainDataset.mean)/trainDataset.std)
             trainDataLoader = DataLoader(
                 trainDataset, batch_size=config.batchSize)
             evalDataLoader = DataLoader(
@@ -70,8 +73,7 @@ for forecastHour in range(1, 6):
                 trainDataLoader=trainDataLoader,
                 evalDataLoader=evalDataLoader,
                 transform=transform,
-                earlyStopEndure=config.earlyStopEndure,
-            )
+                earlyStopEndure=config.earlyStopEndure)
             history = learnigModel.fit(config.epochs, history)
             history.showResult()
 
