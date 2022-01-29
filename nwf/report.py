@@ -1,10 +1,8 @@
 import json
 import math
 
-import numpy as np
-
 from config import Config
-from nnwf.history import HistoryModel
+from nwf.history import HistoryModel
 
 
 class ReportModel():

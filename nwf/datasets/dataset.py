@@ -1,12 +1,11 @@
 import math
 import sys
-import datetime
 
 import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 
-from nnwf.dbfetcher import DbFetcher, RecordModel
+from nwf.datasets.dbfetcher import DbFetcher, RecordModel
 
 
 class DatasetBaseModel(IterableDataset):
@@ -185,10 +184,9 @@ class DatasetBaseModel(IterableDataset):
 
 class TrainDatasetModel(DatasetBaseModel):
     def __init__(
-            self, forecast_hour: int, train_hour: int, targetyear: int):
-        fetcher = DbFetcher(targetyear, mode="train")
+            self, forecastHour: int, trainHour: int, fetcher: DbFetcher):
         super().__init__(
-            fetcher, forecast_hour, train_hour)
+            fetcher, forecastHour, trainHour)
 
         self.mean = self.__getMean(self.len)
         self.std = self.__getStd(self.len, self.mean)
@@ -262,10 +260,10 @@ class TrainDatasetModel(DatasetBaseModel):
 
 class EvalDatasetModel(DatasetBaseModel):
     def __init__(
-            self, forecast_hour: int, train_hour: int, targetyear: int):
+            self, forecastHour: int, trainHour: int, targetyear: int):
         fetcher = DbFetcher(targetyear, mode="eval")
         super().__init__(
-            fetcher, forecast_hour, train_hour)
+            fetcher, forecastHour, trainHour)
 
     def observed(self) -> torch.Tensor:
         return torch.cat([val for _, val in self], dim=0)

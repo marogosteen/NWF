@@ -14,6 +14,7 @@ class HistoryModel():
         print("",
               "best epoch: ", f"\t{self.best_epoch()}",
               "best loss : ", f"\t{round(self.best_loss(), 7)}",
+              "best RMSE : ", f"\t{round(math.sqrt(self.best_loss()), 7)}",
               sep="\n")
 
     def isBestLoss(self, currentLoss) -> bool:
@@ -37,6 +38,8 @@ class HistoryModel():
         with open(f"result/{model_name}/result_summary.txt", mode="w") as f:
             for line in write_list:
                 f.write(line)
+
+        self.draw_loss(model_name)
 
     def draw_loss(self, model_name):
         best_epoch = self.best_epoch()

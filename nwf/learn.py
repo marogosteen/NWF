@@ -3,7 +3,7 @@ import copy
 import tqdm
 import torch
 
-from nnwf.history import HistoryModel
+from nwf.history import HistoryModel
 
 
 class LearningModel():
