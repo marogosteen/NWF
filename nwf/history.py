@@ -30,17 +30,6 @@ class HistoryModel():
     def save_best_model_state(self, save_path):
         torch.save(self.bestModelState, save_path)
 
-    def save_history(self, model_name):
-        write_list = [
-            f"best epoch {self.best_epoch()}\n",
-            "best loss {:.6f}\n".format(self.best_loss()),
-            "best standard deviation {:.3f}\n".format(math.sqrt(self.best_loss()))]
-        with open(f"result/{model_name}/result_summary.txt", mode="w") as f:
-            for line in write_list:
-                f.write(line)
-
-        self.draw_loss(model_name)
-
     def draw_loss(self, model_name):
         best_epoch = self.best_epoch()
         fig = plt.figure()

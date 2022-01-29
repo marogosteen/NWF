@@ -260,8 +260,7 @@ class TrainDatasetModel(DatasetBaseModel):
 
 class EvalDatasetModel(DatasetBaseModel):
     def __init__(
-            self, forecastHour: int, trainHour: int, targetyear: int):
-        fetcher = DbFetcher(targetyear, mode="eval")
+            self, forecastHour: int, trainHour: int, fetcher: DbFetcher):
         super().__init__(
             fetcher, forecastHour, trainHour)
 

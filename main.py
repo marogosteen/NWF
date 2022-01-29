@@ -20,12 +20,13 @@ from nwf.report import ReportModel
     Datasetのbegin_year,end_yearのエラーハンドリングするべき
     SQLをResultに残そ
     deploy作ろ
+    dataset と inferiority detectorわけよ
 """
 
 config = Config()
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-for forecastHour in range(1, 6)[0:1]:
+for forecastHour in range(1, 6):
     for year in [2016, 2017, 2018, 2019]:
         config.targetYear = year
         config.forecastHour = forecastHour
@@ -97,7 +98,8 @@ for forecastHour in range(1, 6)[0:1]:
 
         torch.save(history.bestModelState, savedir+"/state_dict.pt")
         config.save(savedir)
-        history.save_history(caseName)
+        history.draw_loss(caseName)
+        trainfetcher.leavequery(caseName)
 
 
 print(f"\nDone! {config.caseName}\n")

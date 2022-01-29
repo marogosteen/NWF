@@ -78,6 +78,12 @@ class DbFetcher():
 
         return RecordModel(record)
 
+    def leavequery(self, modelname) -> None:
+        savepath = f"result/{modelname}/query.txt" 
+        with open(savepath, mode="w") as f:
+            f.write(self.query)
+
+
 
 class RecordModel():
     """
