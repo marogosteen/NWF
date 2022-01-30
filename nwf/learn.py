@@ -1,6 +1,7 @@
+from collections import OrderedDict
 import copy
 
-import tqdm
+from tqdm import tqdm
 import torch
 
 from nwf.history import HistoryModel
@@ -20,8 +21,8 @@ class LearningModel():
         self.transform = transform
         self.earlyStopEndure = earlyStopEndure
 
-    def fit(self, epochs:int, history: HistoryModel) -> HistoryModel:
-        for _ in tqdm.tqdm(range(1, epochs+1)):
+    def fit(self, epochs: int, history: HistoryModel) -> HistoryModel:
+        for _ in tqdm(range(1, epochs+1)):
             trainLoss = self.__train(self.trainDataLoader, self.transform)
             evalLoss = self.__eval(self.evalDataLoader, self.transform)
             history.train_loss_hist.append(trainLoss)
@@ -30,6 +31,7 @@ class LearningModel():
             if history.isBestLoss(evalLoss):
                 history.bestModelState = copy.deepcopy(self.net.state_dict())
 
+            # TODO: これズル
             if self.__isEarlyStop(history, self.earlyStopEndure):
                 print("[ Early Stop ]\n")
                 return history
