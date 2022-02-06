@@ -24,12 +24,15 @@ from nwf.report import ReportModel
     DataSetの動作確認用のTest書きたい
     波系やっていない
     transform
+    wave classのOneHot
+    bufferの動作確認したい
+    Bufの使っていない中間のRecord無視
 """
 
 config = Config()
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-for forecastHour in range(1, 6):
+for forecastHour in range(6, 11):
     for year in [2016, 2017, 2018, 2019]:
         config.targetYear = year
         config.forecastHour = forecastHour

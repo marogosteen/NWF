@@ -101,8 +101,9 @@ class DatasetBaseModel(IterableDataset):
             cos_month = math.cos(2 * math.pi * normalize_month)
             sin_hour = math.sin(2 * math.pi * normalize_hour)
             cos_hour = math.cos(2 * math.pi * normalize_hour)
-            isWindWave = int(False if record.period >
-                             record.height * 4 + 2 else True)
+            isWindWave = True if record.period > record.height * 4 + 2 else False
+            windwave = int(isWindWave)
+            swellwave = int(not isWindWave)
 
             data.extend([
                 sin_month,
@@ -110,7 +111,10 @@ class DatasetBaseModel(IterableDataset):
                 sin_hour,
                 cos_hour,
 
-                isWindWave,
+                # isWindWave,
+                windwave,
+                swellwave,
+
                 record.air_pressure,
                 record.temperature,
 

@@ -1,6 +1,6 @@
 import torch
 
-from nnwf.net import NNWF_Net
+from nwf.net import NNWF_Net
 
 net = NNWF_Net(24)
 net.load_state_dict(
@@ -17,16 +17,3 @@ for p in net.parameters():
         count += 1
 
 print(params)
-
-# import datetime
-
-# time = datetime.datetime.strptime("2016-01-01 00:00", "%Y-%m-%d %H:%M")
-
-# count = 1
-# while True:
-#     time += datetime.timedelta(hours=1)
-#     if time.year == 2020:
-#         break
-#     count += 1
-
-# print(count)
