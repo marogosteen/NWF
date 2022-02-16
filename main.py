@@ -27,6 +27,7 @@ from nwf.report import ReportModel
     wave classのOneHot
     bufferの動作確認したい
     Bufの使っていない中間のRecord無視
+    DBの中身のTestしたい。だぶりとか。
 """
 
 config = Config()

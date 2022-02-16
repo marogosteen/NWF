@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from nwf.datasets.dbfetcher import DbFetcher
-from nwf.datasets.partmodels.basedataset import DatasetBaseModel
+from nwf.datasets.basedataset import DatasetBaseModel
 
 
 class TrainDatasetModel(DatasetBaseModel):

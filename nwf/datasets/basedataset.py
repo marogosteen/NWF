@@ -17,6 +17,9 @@ class DatasetBaseModel(IterableDataset):
         self.recordBuffer = []
         self.len, self.dataSize = self.__shape()
 
+    def __del__(self):
+        self.__fetcher.close()
+
     def __shape(self):
         for count, (data, _) in enumerate(self):
             continue
@@ -111,7 +114,6 @@ class DatasetBaseModel(IterableDataset):
                 sin_hour,
                 cos_hour,
 
-                # isWindWave,
                 windwave,
                 swellwave,
 
@@ -149,25 +151,14 @@ class DatasetBaseModel(IterableDataset):
             traindata(list): 学習用の整形された真値データ（Label）
         """
         data = []
-        record = self.recordBuffer[self.trainHour + self.forecastHour - 1]
+        record: RecordModel = self.recordBuffer[
+            self.trainHour + self.forecastHour - 1]
         data.extend([
-            record.height
-        ])
+            record.height])
         return data
 
     def close(self):
-        self.__session.close()
-
-    def datetimeList(self) -> list:
-        self.__fetcher.initQuery()
-        datetimeList = []
-        while True:
-            try:
-                datetimeList.append(
-                    self.__fetcher.nextRecord().datetime.strftime("%Y-%m-%d %H:%M"))
-            except StopIteration:
-                break
-        return datetimeList
+        self.__fetcher.close()
 
     def inferiorityList(self) -> list:
         self.__iter__()
