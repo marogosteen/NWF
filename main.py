@@ -19,15 +19,19 @@ from nwf.report import ReportModel
 # TODO 
     Datasetのbegin_year,end_yearのエラーハンドリングするべき
     deploy作ろ
-    dataset と inferiority detectorわけよ
-    EarlyStopはちょっとズルい感ある
-    DataSetの動作確認用のTest書きたい
-    波系やっていない
-    transform
-    wave classのOneHot
-    bufferの動作確認したい
-    Bufの使っていない中間のRecord無視
-    DBの中身のTestしたい。だぶりとか。
+    Test
+        DataSetの動作確認用のTest書きたい
+        bufferの動作確認したい
+        Bufの使っていない中間のRecord無視できているかTest
+        DBの中身のTestしたい。だぶりとか。
+    試すやつ
+        db書き換え
+        前ReportのRun
+        periodのRun
+        XAI
+        気圧入れる
+        transformの有無
+    trainを使ったNewアリストのチェック。グラフで。
 """
 
 config = Config()

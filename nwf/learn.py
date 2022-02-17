@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import copy
 
 from tqdm import tqdm
@@ -80,4 +79,6 @@ class LearningModel():
 
     def __isEarlyStop(self, log_model: HistoryModel, endure: int):
         current_epoch = len(log_model.train_loss_hist)
-        return endure < (current_epoch - log_model.best_epoch())
+        bestTrainLoss = min(log_model.train_loss_hist)
+        bestEpoch = log_model.train_loss_hist.index(bestTrainLoss) + 1
+        return endure < (current_epoch - bestEpoch)

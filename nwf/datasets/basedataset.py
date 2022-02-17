@@ -81,10 +81,17 @@ class DatasetBaseModel(IterableDataset):
         """
         recordBuffer内に不良Recordが含まれているかを返す
         """
-        for record in self.recordBuffer:
-            for v in record.__dict__.values():
+        # traindataのvalidation
+        for record in self.recordBuffer[-self.trainHour:]:
+            for v in self.recordBuffer[0].__dict__.values():
                 if v is None:
                     return True
+
+        # labeldataのvalidation
+        for v in record.__dict__.values():
+            if v is None:
+                return True
+
         return False
 
     def __traindataMolding(self) -> list:
@@ -104,7 +111,7 @@ class DatasetBaseModel(IterableDataset):
             cos_month = math.cos(2 * math.pi * normalize_month)
             sin_hour = math.sin(2 * math.pi * normalize_hour)
             cos_hour = math.cos(2 * math.pi * normalize_hour)
-            isWindWave = True if record.period > record.height * 4 + 2 else False
+            isWindWave = record.period > record.height * 4 + 2
             windwave = int(isWindWave)
             swellwave = int(not isWindWave)
 
@@ -120,9 +127,9 @@ class DatasetBaseModel(IterableDataset):
                 record.air_pressure,
                 record.temperature,
 
-                record.kobe_velocity,
-                record.kobe_sin_direction,
-                record.kobe_cos_direction,
+                record.ukb_velocity,
+                record.ukb_sin_direction,
+                record.ukb_cos_direction,
                 record.kix_velocity,
                 record.kix_sin_direction,
                 record.kix_cos_direction,

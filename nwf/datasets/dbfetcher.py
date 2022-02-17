@@ -79,10 +79,9 @@ class DbFetcher():
         return RecordModel(record)
 
     def leavequery(self, modelname) -> None:
-        savepath = f"result/{modelname}/query.txt" 
+        savepath = f"result/{modelname}/query.txt"
         with open(savepath, mode="w") as f:
             f.write(self.query)
-
 
 
 class RecordModel():
@@ -92,9 +91,9 @@ class RecordModel():
 
     def __init__(self, record):
         self.datetime = datetime.datetime.strptime(record[0], "%Y-%m-%d %H:%M")
-        self.kobe_velocity = record[1]
-        self.kobe_sin_direction = record[2]
-        self.kobe_cos_direction = record[3]
+        self.ukb_velocity = record[1]
+        self.ukb_sin_direction = record[2]
+        self.ukb_cos_direction = record[3]
         self.kix_velocity = record[4]
         self.kix_sin_direction = record[5]
         self.kix_cos_direction = record[6]
@@ -135,11 +134,11 @@ def newquery(targetyear: int, mode: str) -> str:
 
     return f"""
 SELECT
-    kobe.datetime,
+    ukb.datetime,
 
-    kobe.velocity,
-    kobe.sin_direction,
-    kobe.cos_direction,
+    ukb.velocity,
+    ukb.sin_direction,
+    ukb.cos_direction,
     kix.velocity,
     kix.sin_direction,
     kix.cos_direction,
@@ -154,33 +153,34 @@ SELECT
     osaka.cos_direction,
 
     Temperature.temperature,
-    AirPressure.air_pressure,
+    kobePressure.air_pressure,
 
     Wave.significant_height,
     Wave.significant_period
 
 FROM
-    Wind AS kobe
-    INNER JOIN Wind AS kix ON kobe.datetime == kix.datetime
-    INNER JOIN Wind AS tomogashima ON kobe.datetime == tomogashima.datetime
-    INNER JOIN Wind AS akashi ON kobe.datetime == akashi.datetime
-    INNER JOIN Wind AS osaka ON kobe.datetime == osaka.datetime
-    INNER JOIN Temperature ON kobe.datetime == Temperature.datetime
-    INNER JOIN AirPressure ON kobe.datetime == AirPressure.datetime
-    INNER JOIN Wave ON kobe.datetime == Wave.datetime
+    Wind AS ukb
+    INNER JOIN Wind AS kix ON ukb.datetime == kix.datetime
+    INNER JOIN Wind AS tomogashima ON ukb.datetime == tomogashima.datetime
+    INNER JOIN Wind AS akashi ON ukb.datetime == akashi.datetime
+    INNER JOIN Wind AS osaka ON ukb.datetime == osaka.datetime
+    INNER JOIN Temperature ON ukb.datetime == Temperature.datetime
+    INNER JOIN AirPressure AS kobePressure ON ukb.datetime == kobePressure.datetime
+    INNER JOIN Wave ON ukb.datetime == Wave.datetime
 
 WHERE
-    kobe.place == 'kobe' AND
+    ukb.place == 'ukb' AND
     kix.place == 'kix' AND
     tomogashima.place == 'tomogashima' AND
     akashi.place == 'akashi' AND
     osaka.place == 'osaka' AND
+    kobePressure.place == 'kobe' AND
     {yes_or_no}(
-        datetime(kobe.datetime) >= datetime("{targetyear}-01-01 00:00") AND
-        datetime(kobe.datetime) <= datetime("{targetyear}-12-31 23:00")
+        datetime(ukb.datetime) >= datetime("{targetyear}-01-01 00:00") AND
+        datetime(ukb.datetime) <= datetime("{targetyear}-12-31 23:00")
     )
 
 ORDER BY
-    kobe.datetime
+    ukb.datetime
 ;
 """
