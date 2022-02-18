@@ -11,7 +11,7 @@ from config import Config
 from nwf.learn import LearningModel
 from nwf.net import NNWF_Net
 from nwf.datasets.dataset import TrainDatasetModel, EvalDatasetModel
-from nwf.datasets.dbfetcher import DbFetcher
+from services.recordFetchService import RecordFetchService
 from nwf.history import HistoryModel
 from nwf.report import ReportModel
 
@@ -49,8 +49,8 @@ for forecastHour in range(6, 11):
         if not os.path.exists(savedir):
             os.mkdir(savedir)
 
-        trainfetcher = DbFetcher(targetyear=config.targetYear, mode="train")
-        evalfetcher = DbFetcher(targetyear=config.targetYear, mode="eval")
+        trainfetcher = RecordFetchService(targetyear=config.targetYear, mode="train")
+        evalfetcher = RecordFetchService(targetyear=config.targetYear, mode="eval")
         tds = TrainDatasetModel(
             forecastHour=forecastHour,
             trainHour=config.trainHour,

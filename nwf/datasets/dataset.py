@@ -1,13 +1,13 @@
 import numpy as np
 import torch
 
-from nwf.datasets.dbfetcher import DbFetcher
+from services.recordFetchService import RecordFetchService
 from nwf.datasets.basedataset import DatasetBaseModel
 
 
 class TrainDatasetModel(DatasetBaseModel):
     def __init__(
-            self, forecastHour: int, trainHour: int, fetcher: DbFetcher):
+            self, forecastHour: int, trainHour: int, fetcher: RecordFetchService):
         super().__init__(
             fetcher, forecastHour, trainHour)
 
@@ -83,7 +83,7 @@ class TrainDatasetModel(DatasetBaseModel):
 
 class EvalDatasetModel(DatasetBaseModel):
     def __init__(
-            self, forecastHour: int, trainHour: int, fetcher: DbFetcher):
+            self, forecastHour: int, trainHour: int, fetcher: RecordFetchService):
         super().__init__(
             fetcher, forecastHour, trainHour)
 

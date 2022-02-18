@@ -4,12 +4,12 @@ import sys
 import torch
 from torch.utils.data import IterableDataset
 
-from nwf.datasets.dbfetcher import DbFetcher, RecordModel
+from services.recordFetchService import RecordFetchService, RecordModel
 
 
 class DatasetBaseModel(IterableDataset):
     def __init__(
-            self, fetcher: DbFetcher, forecastHour: int, trainHour: int):
+            self, fetcher: RecordFetchService, forecastHour: int, trainHour: int):
         super().__init__()
         self.__fetcher = fetcher
         self.forecastHour = forecastHour

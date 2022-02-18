@@ -1,8 +1,12 @@
 import datetime
-import sqlite3
+
+from repositories import dbContext
 
 
-class DbFetcher():
+FETCHCHOUNT = 10000
+
+
+class RecordFetchService():
     """
     Databaseから観測値をfetchするClass
 
@@ -18,33 +22,29 @@ class DbFetcher():
         StopIteration: fetchMany()で返されたlistの要素数が0件の場合はStopIterrationをCallする．
     """
 
-    dbPath = "database/dataset.sqlite"
-
     def __init__(self, targetyear: int, mode: str):
         self.mode = mode
         self.targetyear = targetyear
-        self.connect = sqlite3.connect("database/dataset.sqlite")
-        self.cursor = self.connect.cursor()
+        self.dbContext = dbContext.DbContext()
         self.query = newquery(targetyear, mode)
         self.executeSql()
-
-    def __del__(self):
-        self.close()
+        self.fetchMany()
 
     def close(self) -> None:
         """
         databaseのconnectをcloseする．
         """
 
-        self.connect.close()
+        self.dbContext.close()
+
+    def __del__(self):
+        self.close()
 
     def executeSql(self) -> None:
         """
         sqlを実行し，self.cursorを初期化する.
         """
-
-        self.cursor = self.cursor.execute(self.query)
-        self.fetchMany()
+        self.dbContext.cursor.execute(self.query)
 
     def fetchMany(self) -> None:
         """
@@ -54,8 +54,7 @@ class DbFetcher():
         -----
             StopIteration: fetchの際にrecord数が0件の場合にStopIterrationをCallする．
         """
-
-        buffer = self.cursor.fetchmany(10000)
+        buffer = self.dbContext.cursor.fetchmany(FETCHCHOUNT)
         if not buffer:
             raise StopIteration
         self.__buffer = iter(buffer)
@@ -69,7 +68,6 @@ class DbFetcher():
         -----
             record (RecordModel): 1record
         """
-
         try:
             record = next(self.__buffer)
         except StopIteration:
@@ -88,7 +86,6 @@ class RecordModel():
     """
     1時刻あたりの観測データ
     """
-
     def __init__(self, record):
         self.datetime = datetime.datetime.strptime(record[0], "%Y-%m-%d %H:%M")
         self.ukb_velocity = record[1]
@@ -123,7 +120,6 @@ def newquery(targetyear: int, mode: str) -> str:
         "tarain"の場合はtargetyear以外の期間からrecordをfetchする．
         "eval"の場合はtargetyearの年からrecordをfetchする．
     """
-
     if mode == "train":
         yes_or_no = "NOT"
     elif mode == "eval":
