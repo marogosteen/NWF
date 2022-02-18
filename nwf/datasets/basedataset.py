@@ -82,13 +82,13 @@ class DatasetBaseModel(IterableDataset):
         recordBuffer内に不良Recordが含まれているかを返す
         """
         # traindataのvalidation
-        for record in self.recordBuffer[-self.trainHour:]:
-            for v in self.recordBuffer[0].__dict__.values():
+        for record in self.recordBuffer[:self.trainHour]:
+            for v in record.__dict__.values():
                 if v is None:
                     return True
 
         # labeldataのvalidation
-        for v in record.__dict__.values():
+        for v in self.recordBuffer[-1].__dict__.values():
             if v is None:
                 return True
 
