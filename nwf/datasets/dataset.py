@@ -1,15 +1,15 @@
 import numpy as np
 import torch
 
-from services.recordFetchService import RecordFetchService
+from services.recordService import RecordService
 from nwf.datasets.basedataset import DatasetBaseModel
 
 
 class TrainDatasetModel(DatasetBaseModel):
     def __init__(
-            self, forecastHour: int, trainHour: int, fetcher: RecordFetchService):
+            self, forecastHour: int, trainHour: int, recordService: RecordService):
         super().__init__(
-            fetcher, forecastHour, trainHour)
+            recordService, forecastHour, trainHour)
 
         self.mean = self.__getMean(self.len)
         self.std = self.__getStd(self.len, self.mean)
@@ -83,9 +83,9 @@ class TrainDatasetModel(DatasetBaseModel):
 
 class EvalDatasetModel(DatasetBaseModel):
     def __init__(
-            self, forecastHour: int, trainHour: int, fetcher: RecordFetchService):
+            self, forecastHour: int, trainHour: int, recordService: RecordService):
         super().__init__(
-            fetcher, forecastHour, trainHour)
+            recordService, forecastHour, trainHour)
 
     def observed(self) -> torch.Tensor:
         return torch.cat([val for _, val in self], dim=0)
@@ -97,21 +97,21 @@ def classConvert(label):
     return classTensor[index]
 
 
-class TrainClassificationDataSetModel(TrainDatasetModel):
-    def __init__(self, forecast_hour: int, train_hour: int, targetyear: int):
-        super().__init__(forecast_hour, train_hour, targetyear)
+# class TrainClassificationDataSetModel(TrainDatasetModel):
+#     def __init__(self, forecast_hour: int, train_hour: int, targetyear: int):
+#         super().__init__(forecast_hour, train_hour, targetyear)
 
-    def __next__(self):
-        data, label = super().__next__()
-        label = classConvert(label)
-        return data, label
+#     def __next__(self):
+#         data, label = super().__next__()
+#         label = classConvert(label)
+#         return data, label
 
 
-class EvalClassificationDataSetModel(EvalDatasetModel):
-    def __init__(self, forecast_hour: int, train_hour: int, targetyear: int):
-        super().__init__(forecast_hour, train_hour, targetyear)
+# class EvalClassificationDataSetModel(EvalDatasetModel):
+#     def __init__(self, forecast_hour: int, train_hour: int, targetyear: int):
+#         super().__init__(forecast_hour, train_hour, targetyear)
 
-    def __next__(self):
-        data, label = super().__next__()
-        label = classConvert(label)
-        return data, label
+#     def __next__(self):
+#         data, label = super().__next__()
+#         label = classConvert(label)
+#         return data, label

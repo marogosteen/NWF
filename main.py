@@ -11,7 +11,7 @@ from config import Config
 from nwf.learn import LearningModel
 from nwf.net import NNWF_Net
 from nwf.datasets.dataset import TrainDatasetModel, EvalDatasetModel
-from services.recordFetchService import RecordFetchService
+from services.recordService import RecordService
 from nwf.history import HistoryModel
 from nwf.report import ReportModel
 
@@ -49,16 +49,18 @@ for forecastHour in range(6, 11):
         if not os.path.exists(savedir):
             os.mkdir(savedir)
 
-        trainfetcher = RecordFetchService(targetyear=config.targetYear, mode="train")
-        evalfetcher = RecordFetchService(targetyear=config.targetYear, mode="eval")
+        trianService = RecordService(
+            targetyear=config.targetYear, mode="train")
+        evalService = RecordService(
+            targetyear=config.targetYear, mode="eval")
         tds = TrainDatasetModel(
             forecastHour=forecastHour,
             trainHour=config.trainHour,
-            fetcher=trainfetcher)
+            recordService=trianService)
         eds = EvalDatasetModel(
             forecastHour=forecastHour,
             trainHour=config.trainHour,
-            fetcher=evalfetcher)
+            recordService=evalService)
 
         with tds as trainDataset, eds as evalDataset:
             print(f"train length:{len(trainDataset)}",
@@ -109,7 +111,7 @@ for forecastHour in range(6, 11):
         torch.save(history.bestModelState, savedir+"/state_dict.pt")
         config.save(savedir)
         history.draw_loss(caseName)
-        trainfetcher.leavequery(caseName)
+        trianService.leavequery(caseName)
 
 
 print(f"\nDone! {config.caseName}\n")

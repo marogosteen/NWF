@@ -6,7 +6,7 @@ from repositories import dbContext
 FETCHCHOUNT = 10000
 
 
-class RecordFetchService():
+class RecordService():
     """
     Databaseから観測値をfetchするClass
 
@@ -22,9 +22,9 @@ class RecordFetchService():
         StopIteration: fetchMany()で返されたlistの要素数が0件の場合はStopIterrationをCallする．
     """
 
+    # def __init__(self, query):
     def __init__(self, targetyear: int, mode: str):
         self.mode = mode
-        self.targetyear = targetyear
         self.dbContext = dbContext.DbContext()
         self.query = newquery(targetyear, mode)
         self.executeSql()

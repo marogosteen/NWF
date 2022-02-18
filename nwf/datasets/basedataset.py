@@ -4,21 +4,21 @@ import sys
 import torch
 from torch.utils.data import IterableDataset
 
-from services.recordFetchService import RecordFetchService, RecordModel
+from services.recordService import RecordService, RecordModel
 
 
 class DatasetBaseModel(IterableDataset):
     def __init__(
-            self, fetcher: RecordFetchService, forecastHour: int, trainHour: int):
+            self, recordService: RecordService, forecastHour: int, trainHour: int):
         super().__init__()
-        self.__fetcher = fetcher
+        self.__recordService = recordService
         self.forecastHour = forecastHour
         self.trainHour = trainHour
         self.recordBuffer = []
         self.len, self.dataSize = self.__shape()
 
     def __del__(self):
-        self.__fetcher.close()
+        self.__recordService.close()
 
     def __shape(self):
         for count, (data, _) in enumerate(self):
@@ -29,14 +29,14 @@ class DatasetBaseModel(IterableDataset):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.__fetcher.close()
+        self.__recordService.close()
 
     def __len__(self):
         return self.len
 
     def __iter__(self):
         self.recordBuffer = []
-        self.__fetcher.executeSql()
+        self.__recordService.executeSql()
         return self
 
     def __next__(self):
@@ -55,7 +55,7 @@ class DatasetBaseModel(IterableDataset):
                 self.__fillBuffer()
             else:
                 self.recordBuffer.pop(0)
-                self.recordBuffer.append(self.__fetcher.nextRecord())
+                self.recordBuffer.append(self.__recordService.nextRecord())
 
             if self.__includedInferiority():
                 continue
@@ -74,7 +74,7 @@ class DatasetBaseModel(IterableDataset):
             print("Error recordBufferが空ではない。", file=sys.stderr)
 
         for _ in range(self.forecastHour + self.trainHour):
-            record = self.__fetcher.nextRecord()
+            record = self.__recordService.nextRecord()
             self.recordBuffer.append(record)
 
     def __includedInferiority(self):
@@ -165,7 +165,7 @@ class DatasetBaseModel(IterableDataset):
         return data
 
     def close(self):
-        self.__fetcher.close()
+        self.__recordService.close()
 
     def inferiorityList(self) -> list:
         self.__iter__()
@@ -176,7 +176,7 @@ class DatasetBaseModel(IterableDataset):
                     self.__fillBuffer()
                 else:
                     self.recordBuffer.pop(0)
-                    self.recordBuffer.append(self.__fetcher.nextRecord())
+                    self.recordBuffer.append(self.__recordService.nextRecord())
                 inferiorityList.append(self.__includedInferiority())
             except StopIteration:
                 break
