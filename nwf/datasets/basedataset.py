@@ -124,8 +124,45 @@ class DatasetBaseModel(IterableDataset):
                 windwave,
                 swellwave,
 
-                record.air_pressure,
                 record.temperature,
+
+                record.fukuiPressure,
+                record.fukuyamaPressure,
+                record.hamadaPressure,
+                record.hikonePressure,
+                record.himejiPressure,
+                record.hiroshimaPressure,
+                record.kobePressure,
+                record.kochiPressure,
+                record.kurePressure,
+                record.kyotoPressure,
+                record.maizuruPressure,
+                record.matsuePressure,
+                record.matsuyamaPressure,
+                record.murotomisakiPressure,
+                record.naraPressure,
+                record.okayamaPressure,
+                record.osakaPressure,
+                record.owasePressure,
+                record.saigoPressure,
+                record.sakaiPressure,
+                record.shimizuPressure,
+                record.shionomisakiPressure,
+                record.sukumoPressure,
+                record.sumotoPressure,
+                record.tadotsuPressure,
+                record.takamatsuPressure,
+                record.tokushimaPressure,
+                record.tottoriPressure,
+                record.toyookaPressure,
+                record.tsuPressure,
+                record.tsurugaPressure,
+                record.tsuyamaPressure,
+                record.uenoPressure,
+                record.uwajimaPressure,
+                record.wakayamaPressure,
+                record.yokkaichiPressure,
+                record.yonagoPressure,
 
                 record.ukb_velocity,
                 record.ukb_sin_direction,
@@ -162,7 +199,6 @@ class DatasetBaseModel(IterableDataset):
             self.trainHour + self.forecastHour - 1]
         data.extend([
             record.height])
-            # record.period])
         return data
 
     def close(self):

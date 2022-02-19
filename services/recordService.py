@@ -123,7 +123,44 @@ SELECT
     osaka.cos_direction,
 
     Temperature.temperature,
+
+    fukuiPressure.air_pressure,
+    fukuyamaPressure.air_pressure,
+    hamadaPressure.air_pressure,
+    hikonePressure.air_pressure,
+    himejiPressure.air_pressure,
+    hiroshimaPressure.air_pressure,
     kobePressure.air_pressure,
+    kochiPressure.air_pressure,
+    kurePressure.air_pressure,
+    kyotoPressure.air_pressure,
+    maizuruPressure.air_pressure,
+    matsuePressure.air_pressure,
+    matsuyamaPressure.air_pressure,
+    murotomisakiPressure.air_pressure,
+    naraPressure.air_pressure,
+    okayamaPressure.air_pressure,
+    osakaPressure.air_pressure,
+    owasePressure.air_pressure,
+    saigoPressure.air_pressure,
+    sakaiPressure.air_pressure,
+    shimizuPressure.air_pressure,
+    shionomisakiPressure.air_pressure,
+    sukumoPressure.air_pressure,
+    sumotoPressure.air_pressure,
+    tadotsuPressure.air_pressure,
+    takamatsuPressure.air_pressure,
+    tokushimaPressure.air_pressure,
+    tottoriPressure.air_pressure,
+    toyookaPressure.air_pressure,
+    tsuPressure.air_pressure,
+    tsurugaPressure.air_pressure,
+    tsuyamaPressure.air_pressure,
+    uenoPressure.air_pressure,
+    uwajimaPressure.air_pressure,
+    wakayamaPressure.air_pressure,
+    yokkaichiPressure.air_pressure,
+    yonagoPressure.air_pressure,
 
     Wave.significant_height,
     Wave.significant_period
@@ -135,7 +172,45 @@ FROM
     INNER JOIN Wind AS akashi ON ukb.datetime == akashi.datetime
     INNER JOIN Wind AS osaka ON ukb.datetime == osaka.datetime
     INNER JOIN Temperature ON ukb.datetime == Temperature.datetime
-    INNER JOIN AirPressure AS kobePressure ON ukb.datetime == kobePressure.datetime
+
+    INNER JOIN AirPressure AS fukuiPressure ON ukb.datetime == fukuiPressure.air_pressure
+    INNER JOIN AirPressure AS fukuyamaPressure ON ukb.datetime == fukuyamaPressure.air_pressure
+    INNER JOIN AirPressure AS hamadaPressure ON ukb.datetime == hamadaPressure.air_pressure
+    INNER JOIN AirPressure AS hikonePressure ON ukb.datetime == hikonePressure.air_pressure
+    INNER JOIN AirPressure AS himejiPressure ON ukb.datetime == himejiPressure.air_pressure
+    INNER JOIN AirPressure AS hiroshimaPressure ON ukb.datetime == hiroshimaPressure.air_pressure
+    INNER JOIN AirPressure AS kobePressure ON ukb.datetime == kobePressure.air_pressure
+    INNER JOIN AirPressure AS kochiPressure ON ukb.datetime == kochiPressure.air_pressure
+    INNER JOIN AirPressure AS kurePressure ON ukb.datetime == kurePressure.air_pressure
+    INNER JOIN AirPressure AS kyotoPressure ON ukb.datetime == kyotoPressure.air_pressure
+    INNER JOIN AirPressure AS maizuruPressure ON ukb.datetime == maizuruPressure.air_pressure
+    INNER JOIN AirPressure AS matsuePressure ON ukb.datetime == matsuePressure.air_pressure
+    INNER JOIN AirPressure AS matsuyamaPressure ON ukb.datetime == matsuyamaPressure.air_pressure
+    INNER JOIN AirPressure AS murotomisakiPressure ON ukb.datetime == murotomisakiPressure.air_pressure
+    INNER JOIN AirPressure AS naraPressure ON ukb.datetime == naraPressure.air_pressure
+    INNER JOIN AirPressure AS okayamaPressure ON ukb.datetime == okayamaPressure.air_pressure
+    INNER JOIN AirPressure AS osakaPressure ON ukb.datetime == osakaPressure.air_pressure
+    INNER JOIN AirPressure AS owasePressure ON ukb.datetime == owasePressure.air_pressure
+    INNER JOIN AirPressure AS saigoPressure ON ukb.datetime == saigoPressure.air_pressure
+    INNER JOIN AirPressure AS sakaiPressure ON ukb.datetime == sakaiPressure.air_pressure
+    INNER JOIN AirPressure AS shimizuPressure ON ukb.datetime == shimizuPressure.air_pressure
+    INNER JOIN AirPressure AS shionomisakiPressure ON ukb.datetime == shionomisakiPressure.air_pressure
+    INNER JOIN AirPressure AS sukumoPressure ON ukb.datetime == sukumoPressure.air_pressure
+    INNER JOIN AirPressure AS sumotoPressure ON ukb.datetime == sumotoPressure.air_pressure
+    INNER JOIN AirPressure AS tadotsuPressure ON ukb.datetime == tadotsuPressure.air_pressure
+    INNER JOIN AirPressure AS takamatsuPressure ON ukb.datetime == takamatsuPressure.air_pressure
+    INNER JOIN AirPressure AS tokushimaPressure ON ukb.datetime == tokushimaPressure.air_pressure
+    INNER JOIN AirPressure AS tottoriPressure ON ukb.datetime == tottoriPressure.air_pressure
+    INNER JOIN AirPressure AS toyookaPressure ON ukb.datetime == toyookaPressure.air_pressure
+    INNER JOIN AirPressure AS tsuPressure ON ukb.datetime == tsuPressure.air_pressure
+    INNER JOIN AirPressure AS tsurugaPressure ON ukb.datetime == tsurugaPressure.air_pressure
+    INNER JOIN AirPressure AS tsuyamaPressure ON ukb.datetime == tsuyamaPressure.air_pressure
+    INNER JOIN AirPressure AS uenoPressure ON ukb.datetime == uenoPressure.air_pressure
+    INNER JOIN AirPressure AS uwajimaPressure ON ukb.datetime == uwajimaPressure.air_pressure
+    INNER JOIN AirPressure AS wakayamaPressure ON ukb.datetime == wakayamaPressure.air_pressure
+    INNER JOIN AirPressure AS yokkaichiPressure ON ukb.datetime == yokkaichiPressure.air_pressure
+    INNER JOIN AirPressure AS yonagoPressure ON ukb.datetime == yonagoPressure.air_pressure
+
     INNER JOIN Wave ON ukb.datetime == Wave.datetime
 
 WHERE
@@ -144,7 +219,43 @@ WHERE
     tomogashima.place == 'tomogashima' AND
     akashi.place == 'akashi' AND
     osaka.place == 'osaka' AND
+    fukuiPressure.place == 'fukui' AND
+    fukuyamaPressure.place == 'fukuyama' AND
+    hamadaPressure.place == 'hamada' AND
+    hikonePressure.place == 'hikone' AND
+    himejiPressure.place == 'himeji' AND
+    hiroshimaPressure.place == 'hiroshima' AND
     kobePressure.place == 'kobe' AND
+    kochiPressure.place == 'kochi' AND
+    kurePressure.place == 'kure' AND
+    kyotoPressure.place == 'kyoto' AND
+    maizuruPressure.place == 'maizuru' AND
+    matsuePressure.place == 'matsue' AND
+    matsuyamaPressure.place == 'matsuyama' AND
+    murotomisakiPressure.place == 'murotomisaki' AND
+    naraPressure.place == 'nara' AND
+    okayamaPressure.place == 'okayama' AND
+    osakaPressure.place == 'osaka' AND
+    owasePressure.place == 'owase' AND
+    saigoPressure.place == 'saigo' AND
+    sakaiPressure.place == 'sakai' AND
+    shimizuPressure.place == 'shimizu' AND
+    shionomisakiPressure.place == 'shionomisaki' AND
+    sukumoPressure.place == 'sukumo' AND
+    sumotoPressure.place == 'sumoto' AND
+    tadotsuPressure.place == 'tadotsu' AND
+    takamatsuPressure.place == 'takamatsu' AND
+    tokushimaPressure.place == 'tokushima' AND
+    tottoriPressure.place == 'tottori' AND
+    toyookaPressure.place == 'toyooka' AND
+    tsuPressure.place == 'tsu' AND
+    tsurugaPressure.place == 'tsuruga' AND
+    tsuyamaPressure.place == 'tsuyama' AND
+    uenoPressure.place == 'ueno' AND
+    uwajimaPressure.place == 'uwajima' AND
+    wakayamaPressure.place == 'wakayama' AND
+    yokkaichiPressure.place == 'yokkaichi' AND
+    yonagoPressure.place == 'yonago' AND
     {yes_or_no}(
         datetime(ukb.datetime) >= datetime("{targetyear}-01-01 00:00") AND
         datetime(ukb.datetime) <= datetime("{targetyear}-12-31 23:00")
