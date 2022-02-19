@@ -4,7 +4,7 @@ import sys
 import torch
 from torch.utils.data import IterableDataset
 
-from services.recordService import RecordService, RecordModel
+from services.recordService import RecordService, RecordServiceModel
 
 
 class DatasetBaseModel(IterableDataset):
@@ -104,7 +104,7 @@ class DatasetBaseModel(IterableDataset):
         """
         data = []
         for index in range(self.trainHour):
-            record: RecordModel = self.recordBuffer[index]
+            record: RecordServiceModel = self.recordBuffer[index]
             normalize_month = record.datetime.month / 12
             normalize_hour = record.datetime.hour / 24
             sin_month = math.sin(2 * math.pi * normalize_month)
@@ -121,8 +121,8 @@ class DatasetBaseModel(IterableDataset):
                 sin_hour,
                 cos_hour,
 
-                windwave,
-                swellwave,
+                # windwave,
+                # swellwave,
 
                 record.air_pressure,
                 record.temperature,
@@ -143,8 +143,8 @@ class DatasetBaseModel(IterableDataset):
                 record.osaka_sin_direction,
                 record.osaka_cos_direction,
 
-                record.height,
-                record.period
+                # record.height,
+                # record.period
             ])
 
         return data
@@ -158,10 +158,11 @@ class DatasetBaseModel(IterableDataset):
             traindata(list): 学習用の整形された真値データ（Label）
         """
         data = []
-        record: RecordModel = self.recordBuffer[
+        record: RecordServiceModel = self.recordBuffer[
             self.trainHour + self.forecastHour - 1]
         data.extend([
             record.height])
+            # record.period])
         return data
 
     def close(self):

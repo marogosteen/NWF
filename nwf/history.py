@@ -38,6 +38,7 @@ class HistoryModel():
             ylabel="MSE loss", xlabel="epochs")
         self.__plot_loss(ax, self.train_loss_hist, self.eval_loss_list)
         plt.savefig(f"result/{model_name}/loss.jpg")
+        plt.close()
 
     def __plot_loss(self, ax, train_loss, eval_loss):
         ax.plot(range(1, len(train_loss)+1), train_loss, label="train")
