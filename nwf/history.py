@@ -7,7 +7,7 @@ import torch
 class HistoryModel():
     def __init__(self) -> None:
         self.train_loss_hist = []
-        self.eval_loss_list = []
+        self.eval_loss_hist = []
         self.bestModelState = None
 
     def showResult(self):
@@ -21,11 +21,11 @@ class HistoryModel():
         return self.best_loss() >= currentLoss or not self.bestModelState
 
     def best_loss(self):
-        return min(self.eval_loss_list)
+        return min(self.train_loss_hist)
 
     def best_epoch(self):
         best_loss = self.best_loss()
-        return self.eval_loss_list.index(best_loss) + 1
+        return self.train_loss_hist.index(best_loss) + 1
 
     def save_best_model_state(self, save_path):
         torch.save(self.bestModelState, save_path)
@@ -36,7 +36,7 @@ class HistoryModel():
         ax = fig.add_subplot(
             111, title=f"loss  best epoch {best_epoch}",
             ylabel="MSE loss", xlabel="epochs")
-        self.__plot_loss(ax, self.train_loss_hist, self.eval_loss_list)
+        self.__plot_loss(ax, self.train_loss_hist, self.eval_loss_hist)
         plt.savefig(f"result/{model_name}/loss.jpg")
         plt.close()
 

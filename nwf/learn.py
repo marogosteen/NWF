@@ -25,12 +25,11 @@ class LearningModel():
             trainLoss = self.__train(self.trainDataLoader, self.transform)
             evalLoss = self.__eval(self.evalDataLoader, self.transform)
             history.train_loss_hist.append(trainLoss)
-            history.eval_loss_list.append(evalLoss)
+            history.eval_loss_hist.append(evalLoss)
 
             if history.isBestLoss(evalLoss):
                 history.bestModelState = copy.deepcopy(self.net.state_dict())
 
-            # TODO: これズル
             if self.__isEarlyStop(history, self.earlyStopEndure):
                 print("[ Early Stop ]\n")
                 return history
@@ -79,6 +78,5 @@ class LearningModel():
 
     def __isEarlyStop(self, log_model: HistoryModel, endure: int):
         current_epoch = len(log_model.train_loss_hist)
-        bestTrainLoss = min(log_model.train_loss_hist)
-        bestEpoch = log_model.train_loss_hist.index(bestTrainLoss) + 1
+        bestEpoch = log_model.best_epoch()
         return endure < (current_epoch - bestEpoch)

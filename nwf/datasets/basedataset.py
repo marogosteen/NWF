@@ -121,8 +121,8 @@ class DatasetBaseModel(IterableDataset):
                 sin_hour,
                 cos_hour,
 
-                # windwave,
-                # swellwave,
+                windwave,
+                swellwave,
 
                 record.air_pressure,
                 record.temperature,
@@ -143,8 +143,8 @@ class DatasetBaseModel(IterableDataset):
                 record.osaka_sin_direction,
                 record.osaka_cos_direction,
 
-                # record.height,
-                # record.period
+                record.height,
+                record.period
             ])
 
         return data
